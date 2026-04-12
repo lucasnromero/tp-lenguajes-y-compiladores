@@ -1,6 +1,6 @@
 package lyc.compiler.main;
 
-import lyc.compiler.Parser;
+import lyc.compiler.parser;
 import lyc.compiler.factories.FileFactory;
 import lyc.compiler.factories.ParserFactory;
 import lyc.compiler.files.FileOutputWriter;
@@ -20,7 +20,7 @@ public final class Compiler {
         }
 
         try (Reader reader = FileFactory.create(args[0])) {
-            Parser parser = ParserFactory.create(reader);
+            parser parser = ParserFactory.create(reader);
             parser.parse();
             FileOutputWriter.writeOutput("symbol-table.txt", new SymbolTableGenerator());
             FileOutputWriter.writeOutput("intermediate-code.txt", new SymbolTableGenerator());

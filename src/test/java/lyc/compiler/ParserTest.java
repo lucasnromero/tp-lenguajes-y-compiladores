@@ -80,7 +80,7 @@ public class ParserTest {
 
 
     private void compilationSuccessful(String input) throws Exception {
-        assertThat(scan(input).sym).isEqualTo(ParserSym.EOF);
+        assertThat(scan(input).sym).isEqualTo(sym.EOF);
     }
 
     private void compilationError(String input){
