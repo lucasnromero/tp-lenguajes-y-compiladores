@@ -26,3 +26,11 @@ Regex para validar comentarios.
 Qué tenemos que tener en cuenta?
 Debería aceptar un caracter chino dentro del comentario?
 
+3. Fixeamos errores en nombre de clases
+
+4. Agregamos tokens de temas especiales
+
+## Observacion
+
+Hay que ver la jerarquía de tokens.
+Pusimos el "=" abajo de "==". Habría que ver que devuelve si lo ponemos al revés como para entenderla.
