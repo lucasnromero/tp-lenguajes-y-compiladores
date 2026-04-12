@@ -53,6 +53,17 @@ terminal READ;
 terminal WRITE;
 terminal INIT;
 
+/* Temas especiales */
+terminal IGUAL;
+terminal TO;
+terminal STEP;
+terminal CORCHETE_IZQ;
+terminal CORCHETE_DER;
+terminal NEXT;
+
+terminal DIV;
+terminal MOD;
+
 /* Non terminals */
 non terminal Object PROGRAMA;
 non terminal Object BLOQUE_INIT;

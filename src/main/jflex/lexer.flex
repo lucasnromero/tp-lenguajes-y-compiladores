@@ -98,6 +98,14 @@ Comment = "#+"([^+]|\+[^#])*"+#"
   "OR"        { return symbol(sym.OR); }
   "NOT"       { return symbol(sym.NOT); }
 
+  "TO"        { return symbol(sym.TO); }
+  "STEP"      { return symbol(sym.STEP); }
+  "["         { return symbol(sym.CORCHETE_IZQ); }
+  "]"         { return symbol(sym.CORCHETE_DER); }
+  "NEXT"      { return symbol(sym.NEXT); }
+  "DIV"       { return symbol(sym.DIV); }
+  "MOD"       { return symbol(sym.MOD); }
+
   /* Operators */
   -{Digit}+ {
     parseIntInRange(yytext());
@@ -118,6 +126,7 @@ Comment = "#+"([^+]|\+[^#])*"+#"
   ">"         { return symbol(sym.SIMBOLO_MAYOR); }
 
   ":="        { return symbol(sym.ASIG); }
+  "="         { return symbol(sym.IGUAL); }
   ":"         { return symbol(sym.DOS_PUNTOS); }
 
   "("         { return symbol(sym.PARENTESIS_IZQ); }
