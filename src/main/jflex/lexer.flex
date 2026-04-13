@@ -4,6 +4,7 @@ import java_cup.runtime.Symbol;
 import lyc.compiler.sym;
 import lyc.compiler.model.*;
 import static lyc.compiler.constants.Constants.*;
+import lyc.compiler.symbolTable.*;
 
 
 %%
@@ -22,12 +23,14 @@ import static lyc.compiler.constants.Constants.*;
 
 %{
   private Symbol symbol(int type) {
+    System.out.print("(" + sym.terminalNames[type] + ",-)" + " ");
     return new Symbol(type, yyline, yycolumn);
   }
 
   private Symbol symbol(int type, Object value) {
+    System.out.print("(" + sym.terminalNames[type] + "," + value + ")" + " ");
     return new Symbol(type, yyline, yycolumn, value);
-  }
+  } 
 
   private int parseIntInRange(String text) throws InvalidIntegerException {
     try {
@@ -35,6 +38,10 @@ import static lyc.compiler.constants.Constants.*;
       if (value < -32768 || value > 32767) {
         throw new InvalidIntegerException("Integer out of range");
       }
+      SymbolTableEntry entry = new SymbolTableEntry(yytext());
+      entry.setType("Int");
+      entry.setValue(Integer.parseInt(yytext()));
+      SymbolTable.add(yytext(), entry);
       return (int) value;
     } catch (NumberFormatException e) {
       throw new InvalidIntegerException("Invalid integer");
@@ -141,7 +148,12 @@ Comment = "#+"([^+]|\+[^#])*"+#"
 
   {CTEINT}    { return symbol(sym.CTE_INT, parseIntInRange(yytext())); }
 
-  {CTEFLOAT}  { return symbol(sym.CTE_FLOAT, yytext()); }
+  {CTEFLOAT}  { 
+    SymbolTableEntry entry = new SymbolTableEntry(yytext());
+    entry.setType("Float");
+    entry.setValue(Float.parseFloat(yytext()));
+    SymbolTable.add(yytext(), entry);
+    return symbol(sym.CTE_FLOAT, yytext()); }
   
   {CTESTR}    { String text = yytext();
 
@@ -151,12 +163,16 @@ Comment = "#+"([^+]|\+[^#])*"+#"
     if (content.length() > 50) {
         throw new InvalidLengthException("String constant too long");
     }
-
+    SymbolTableEntry entry = new SymbolTableEntry(yytext());
+    entry.setType("String");
+    entry.setValue(content);
+    SymbolTable.add(text, entry);
     return symbol(sym.CTE_STR, content);}
 
   {ID}        {if (yytext().length() > 50) {  // probablemente 50, suele ser igual que string
         throw new InvalidLengthException("Identifier too long");
     }
+    SymbolTable.add(yytext(), new SymbolTableEntry(yytext()));
     return symbol(sym.ID, yytext());}
 
   
