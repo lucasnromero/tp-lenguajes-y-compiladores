@@ -105,6 +105,7 @@ Comment = "#+"([^+]|\+[^#])*"+#"
   "NEXT"      { return symbol(sym.NEXT); }
   "DIV"       { return symbol(sym.DIV); }
   "MOD"       { return symbol(sym.MOD); }
+  "FOR"       { return symbol(sym.FOR); }      
 
   /* Operators */
   -{Digit}+ {

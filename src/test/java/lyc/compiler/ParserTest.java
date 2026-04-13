@@ -15,12 +15,22 @@ import static com.google.common.truth.Truth.assertThat;
 import static lyc.compiler.Constants.EXAMPLES_ROOT_DIRECTORY;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@Disabled
+
 public class ParserTest {
 
     @Test
-    public void assignmentWithExpression() throws Exception {
-        compilationSuccessful("c=d*(e-21)/4");
+    public void forTest() throws Exception {
+        compilationSuccessful("FOR  a=3 TO 5 b:=3 b:=3+5 NEXT a");
+    }
+
+    @Test
+    public void forWithStepTest() throws Exception {
+        compilationSuccessful("FOR  i=0 TO 5 STEP 2 read(b) b:=3+5 NEXT i");
+    }
+
+    @Test
+    public void divAndMod() throws Exception {
+        compilationSuccessful("x := (10 DIV 3) + (10 MOD 3)");
     }
 
     @Test
