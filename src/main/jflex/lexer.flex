@@ -38,10 +38,10 @@ import lyc.compiler.symbolTable.*;
       if (value < -32768 || value > 32767) {
         throw new InvalidIntegerException("Integer out of range");
       }
-      SymbolTableEntry entry = new SymbolTableEntry(yytext());
+      SymbolTableEntry entry = new SymbolTableEntry("_"+yytext());
       entry.setType("Int");
       entry.setValue(Integer.parseInt(yytext()));
-      SymbolTable.add(yytext(), entry);
+      SymbolTable.add("_"+yytext(), entry);
       return (int) value;
     } catch (NumberFormatException e) {
       throw new InvalidIntegerException("Invalid integer");
@@ -149,10 +149,10 @@ Comment = "#+"([^+]|\+[^#])*"+#"
   {CTEINT}    { return symbol(sym.CTE_INT, parseIntInRange(yytext())); }
 
   {CTEFLOAT}  { 
-    SymbolTableEntry entry = new SymbolTableEntry(yytext());
+    SymbolTableEntry entry = new SymbolTableEntry("_"+yytext());
     entry.setType("Float");
     entry.setValue(Float.parseFloat(yytext()));
-    SymbolTable.add(yytext(), entry);
+    SymbolTable.add("_"+yytext(), entry);
     return symbol(sym.CTE_FLOAT, yytext()); }
   
   {CTESTR}    { String text = yytext();
@@ -163,10 +163,11 @@ Comment = "#+"([^+]|\+[^#])*"+#"
     if (content.length() > 50) {
         throw new InvalidLengthException("String constant too long");
     }
-    SymbolTableEntry entry = new SymbolTableEntry(yytext());
+    SymbolTableEntry entry = new SymbolTableEntry("_"+content);
     entry.setType("String");
     entry.setValue(content);
-    SymbolTable.add(text, entry);
+    entry.setLength(content.length());
+    SymbolTable.add("_"+content, entry);
     return symbol(sym.CTE_STR, content);}
 
   {ID}        {if (yytext().length() > 50) {  // probablemente 50, suele ser igual que string
