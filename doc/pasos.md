@@ -34,3 +34,24 @@ Debería aceptar un caracter chino dentro del comentario?
 
 Hay que ver la jerarquía de tokens.
 Pusimos el "=" abajo de "==". Habría que ver que devuelve si lo ponemos al revés como para entenderla.
+
+## Tabla de simbolos
+
+1. Se creo la clase SymbolTable.java, la cual usa una coleccion de tipo Map para simular la tabla.
+2. Se creo la clase SymbolTableEntry, la cual va a ser el Valor de cada entrada de la tabla, donde guardamos los atributos que creamos necesario, tales como el nombre, el valor, el tipo de dato, o lo que corresponda.
+3. En SymbolTableGenerator.java, se agrega la logica para guardar en el archivo con el formato de tabla, todo el contenido de la misma.
+4. En lexer.flex, se importan las clases anteriormente creadas, y se agrega la logica para agregar a la tabla de simbolos cuando se lea cualquier tipo de constante (string, float o int), y un ID.
+
+TODO: debatir sobre que campos serian utiles agregar a la tabla de simbolos.
+
+## Imprimir Tokens mientras parseamos
+
+1. Se modifico los metodos "symbol", para que cuando lea un token, lo imprima del formato (NOMBRE_DE_TOKEN,LEXEMA).
+
+Por ejemplo:
+
+a := 3
+
+(ID,a) (ASIG,;=) (CTE_INT,3)
+
+
