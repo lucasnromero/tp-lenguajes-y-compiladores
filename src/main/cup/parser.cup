@@ -54,6 +54,7 @@ terminal WRITE;
 terminal INIT;
 
 /* Temas especiales */
+terminal FOR;
 terminal IGUAL;
 terminal TO;
 terminal STEP;
@@ -91,6 +92,10 @@ non terminal Object DECLARACIONES;
 non terminal Object DECLARACION;
 non terminal Object LISTA_VARIABLES;
 non terminal Object TIPO_DATO;
+
+/* Temas especiales */
+
+
 
 /* Start */
 start with PROGRAMA;
@@ -150,6 +155,8 @@ EXPRESION ::= EXPRESION SIMBOLO_MAS TERMINO
 
 TERMINO ::= TERMINO ASTERISCO FACTOR
           | TERMINO BARRA_DIAGONAL FACTOR
+          | TERMINO DIV FACTOR
+          | TERMINO MOD FACTOR
           | FACTOR
           ;
 
@@ -187,6 +194,8 @@ COMPARADOR ::= EQ
 
 /* Iteración */
 ITERACION ::= WHILE PARENTESIS_IZQ CONDICION PARENTESIS_DER LLAVE_IZQ BLOQUE LLAVE_DER
+            | FOR ID IGUAL EXPRESION TO EXPRESION BLOQUE NEXT ID
+            | FOR ID IGUAL EXPRESION TO EXPRESION STEP CTE_INT BLOQUE NEXT ID
             ;
 
 /* Entrada / salida */
