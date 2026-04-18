@@ -5,6 +5,7 @@ import lyc.compiler.factories.FileFactory;
 import lyc.compiler.factories.ParserFactory;
 import lyc.compiler.files.FileOutputWriter;
 import lyc.compiler.files.SymbolTableGenerator;
+import lyc.compiler.tercetos.*;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -22,6 +23,11 @@ public final class Compiler {
         try (Reader reader = FileFactory.create(args[0])) {
             parser parser = ParserFactory.create(reader);
             parser.parse();
+            int i = 0;
+            for (Terceto t : TercetoManager.getAll()) {
+                System.out.println("[" + i + "] " + t);
+                i++;
+            }
             FileOutputWriter.writeOutput("symbol-table.txt", new SymbolTableGenerator());
             FileOutputWriter.writeOutput("intermediate-code.txt", new SymbolTableGenerator());
             FileOutputWriter.writeOutput("final.asm", new SymbolTableGenerator());

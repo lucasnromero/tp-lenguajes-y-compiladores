@@ -153,7 +153,7 @@ Comment = "#+"([^+]|\+[^#])*"+#"
     entry.setType("Float");
     entry.setValue(Float.parseFloat(yytext()));
     SymbolTable.add("_"+yytext(), entry);
-    return symbol(sym.CTE_FLOAT, yytext()); }
+    return symbol(sym.CTE_FLOAT, Double.parseDouble(yytext())); }
   
   {CTESTR}    { String text = yytext();
 
