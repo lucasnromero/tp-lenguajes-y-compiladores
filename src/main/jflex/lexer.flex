@@ -177,7 +177,9 @@ Comment = "#+"([^+]|\+[^#])*"+#"
     return symbol(sym.ID, yytext());}
 
   
-  {WhiteSpace} { /* ignore */ }
+  {WhiteSpace} {
+    if (yytext().contains("\n")) System.out.println();
+  }
  
 }
 

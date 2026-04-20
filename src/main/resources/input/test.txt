@@ -1,1 +1,115 @@
-FOR  a=3 TO 5 b:=3 b:=3+5 write("HAHA") NEXT a
+#+ TEMAS COMUNES +#
+
+
+#+ caso bloque de incicializacion, donde se declaran los tipos de datos de las variables +#
+
+init {
+    a1, b1 : Float
+    variable1 : Int
+    p1, p2, p3 : String
+}
+
+#+ operaciones aritmeticas +#
+
+x := 27 - c
+x := r + 500
+x := 34 * 3
+x := z / f
+
+#+ distinto tipos de asignaciones (flotante, entera y string) +#
+a := 99999.99
+a := 99.
+a := .9999
+a := 2
+
+b := "@sdADaSjfla%dfg"
+b := "asldk  fh sjf"
+
+#+ IF con else +#
+
+if (a > b)
+{
+    write("a es mas grande que b")
+}
+else
+{
+    write("a es mas chico o igual a b")
+}
+#+ IF con NOT +#
+a := 1
+b := 1
+c := 2
+
+if (NOT a > b)
+{
+    write("a no es mas grande que b")
+}
+
+
+#+ IF con OR +#
+
+
+a := 1
+b := 1
+c := 2
+
+if (a > b OR c > b)
+{
+    write("a es mas grande que b o c es mas grande que b")
+}
+
+#+ Sentencia read, donde "a" es una variable +#
+
+read(a)
+
+
+#+ iteracion con WHILE +#
+
+
+a := 1
+b := 3
+
+while (a > b)
+{
+    write("a es mas grande que b")
+    a := a + 1
+}
+
+#+ Sentencia write, donde """hola""" es una constante de tipo string, y "c" es una variable +#
+
+
+write("hola")  
+write(c)  
+
+
+
+
+
+#+ TEMAS ESPECIALES +#
+
+
+#+ Operacion MOD y DIV +#
+
+x := (10 DIV 3) + (10 MOD 3) 
+
+if(x MOD 2 == 0)
+{
+  write("Par")
+}
+
+#+ bucle FOR con STEP +#
+
+
+
+FOR i := 1 TO 10 STEP 2
+   write(i)
+NEXT i
+
+
+#+ bucle FOR sin STEP (se asume 1 el salto)+#
+
+
+
+FOR i := 1 TO 5
+   write(i)
+NEXT i 
