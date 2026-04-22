@@ -58,6 +58,13 @@ if (a > b OR c > b)
     write("a es mas grande que b o c es mas grande que b")
 }
 
+#+ IF con AND +#
+
+if (a > b AND c > b)
+{
+    write("a es mas grande que b y c es mas grande que b")
+}
+
 #+ Sentencia read, donde "a" es una variable +#
 
 read(a)
