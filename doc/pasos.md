@@ -55,3 +55,35 @@ a := 3
 (ID,a) (ASIG,;=) (CTE_INT,3)
 
 
+## Modificaciones parser.cup (22/04/26)
+
+- Cambié todos los no terminales a minusculas. Los no terminales quedan mejor en minusculas y los tokens en mayúsculas. 
+
+- Se unificó asignación: 
+asignacion ::= ID ASIG expresion
+             | ID ASIG CTE_STR
+             ;
+
+- Cambié las reglas de condiciones por estas, que son como están en la teoría para que quede más legible.
+Además agregué un NOT adelante de comparacion para que quede consistente y funcione tanto para el IF como para el WHILE.
+Antes no funcionaba el NOT con el while.
+
+seleccion ::=   IF PARENTESIS_IZQ condicion PARENTESIS_DER LLAVE_IZQ bloque LLAVE_DER ELSE LLAVE_IZQ bloque LLAVE_DER |
+                IF PARENTESIS_IZQ condicion PARENTESIS_DER LLAVE_IZQ bloque LLAVE_DER
+
+condicion ::= comparacion 
+            | NOT comparacion
+            | condicion AND comparacion 
+            | condicion OR comparacion
+
+comparacion ::= expresion comparador expresion
+
+comparador ::= EQ
+             | SIMBOLO_MENOR
+             | SIMBOLO_MAYOR
+             | SIMBOLO_MENOR_O_IGUAL
+             | SIMBOLO_MAYOR_O_IGUAL
+             ;
+
+
+

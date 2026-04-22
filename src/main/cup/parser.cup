@@ -66,128 +66,121 @@ terminal DIV;
 terminal MOD;
 
 /* Non terminals */
-non terminal Object PROGRAMA;
-non terminal Object BLOQUE_INIT;
-non terminal Object BLOQUE;
-non terminal Object SENTENCIA;
+non terminal Object programa;
+non terminal Object bloque_init;
+non terminal Object bloque;
+non terminal Object sentencia;
 
-non terminal Object ASIG_SIMPLE;
-non terminal Object ASIG_STRING;
-non terminal Object EXPRESION;
-non terminal Object TERMINO;
-non terminal Object FACTOR;
+non terminal Object asignacion;
+non terminal Object expresion;
+non terminal Object termino;
+non terminal Object factor;
 
-non terminal Object COND_SIN_ELSE;
-non terminal Object COND_CON_ELSE;
-non terminal Object CONDICION;
-non terminal Object COMPARACION;
-non terminal Object COMPARADOR;
+non terminal Object seleccion;
+non terminal Object condicion;
+non terminal Object comparacion;
+non terminal Object comparador;
 
-non terminal Object ITERACION;
+non terminal Object iteracion;
 
-non terminal Object SALIDA;
-non terminal Object ENTRADA;
+non terminal Object salida;
+non terminal Object entrada;
 
-non terminal Object DECLARACIONES;
-non terminal Object DECLARACION;
-non terminal Object LISTA_VARIABLES;
-non terminal Object TIPO_DATO;
-non terminal Object FOR_BUCLE;
+non terminal Object declaraciones;
+non terminal Object declaracion;
+non terminal Object lista_variables;
+non terminal Object tipo_dato;
+non terminal Object for_bucle;
 
 /* Temas especiales */
 
 
 
 /* Start */
-start with PROGRAMA;
+start with programa;
 
 
 
 /* Grammar */
 
-PROGRAMA ::= BLOQUE_INIT BLOQUE
-            | BLOQUE_INIT
-            | BLOQUE
+programa ::= bloque_init bloque
+            | bloque_init
+            | bloque
             | 
            ;
 
-BLOQUE_INIT ::= INIT LLAVE_IZQ DECLARACIONES LLAVE_DER
+bloque_init ::= INIT LLAVE_IZQ declaraciones LLAVE_DER
               ;
 
-DECLARACIONES ::= DECLARACIONES DECLARACION
-                | DECLARACION
+declaraciones ::= declaraciones declaracion
+                | declaracion
                 ;
 
-DECLARACION ::= LISTA_VARIABLES DOS_PUNTOS TIPO_DATO
+declaracion ::= lista_variables DOS_PUNTOS tipo_dato
               ;
 
-LISTA_VARIABLES ::= LISTA_VARIABLES COMA ID
+lista_variables ::= lista_variables COMA ID
                   | ID
                   ;
 
-TIPO_DATO ::= INT
+tipo_dato ::= INT
             | FLOAT
             | STRING
             ;
 
 /* Bloque de sentencias */
-BLOQUE ::= BLOQUE SENTENCIA
-         | SENTENCIA
+bloque ::= bloque sentencia
+         | sentencia
          ;
 
-SENTENCIA ::= COND_SIN_ELSE
-            | COND_CON_ELSE
-            | ITERACION
-            | ASIG_SIMPLE
-            | ASIG_STRING
-            | SALIDA
-            | ENTRADA
-            | FOR_BUCLE
+sentencia ::= seleccion
+            | iteracion
+            | asignacion
+            | salida
+            | entrada
+            | for_bucle
             ;
 
 /* Asignación */
-ASIG_SIMPLE ::= ID ASIG EXPRESION
-              ;
+asignacion ::= ID ASIG expresion
+             | ID ASIG CTE_STR
+             ;
 
 /* Expresiones */
-EXPRESION ::= EXPRESION SIMBOLO_MAS TERMINO
-            | EXPRESION SIMBOLO_MENOS TERMINO
-            | TERMINO
+expresion ::= expresion SIMBOLO_MAS termino
+            | expresion SIMBOLO_MENOS termino
+            | termino
             ;
 
-TERMINO ::= TERMINO ASTERISCO FACTOR
-          | TERMINO BARRA_DIAGONAL FACTOR
-          | TERMINO DIV FACTOR
-          | TERMINO MOD FACTOR
-          | FACTOR
+termino ::= termino ASTERISCO factor
+          | termino BARRA_DIAGONAL factor
+          | termino DIV factor
+          | termino MOD factor
+          | factor
           ;
 
-FACTOR ::= PARENTESIS_IZQ EXPRESION PARENTESIS_DER
+factor ::= PARENTESIS_IZQ expresion PARENTESIS_DER
          | ID
          | CTE_INT
          | CTE_FLOAT
          ;
 
-ASIG_STRING ::= ID ASIG CTE_STR
-              ;
 /* Condicionales */
-COND_CON_ELSE ::= COND_SIN_ELSE ELSE LLAVE_IZQ BLOQUE LLAVE_DER
-                ;
-
-COND_SIN_ELSE ::= IF PARENTESIS_IZQ CONDICION PARENTESIS_DER LLAVE_IZQ BLOQUE LLAVE_DER
-                | IF PARENTESIS_IZQ NOT CONDICION PARENTESIS_DER LLAVE_IZQ BLOQUE LLAVE_DER
-                ;
-
-/* Condiciones */
-CONDICION ::= COMPARACION
-            | CONDICION AND COMPARACION
-            | CONDICION OR COMPARACION
+seleccion ::= IF PARENTESIS_IZQ condicion PARENTESIS_DER LLAVE_IZQ bloque LLAVE_DER ELSE LLAVE_IZQ bloque LLAVE_DER
+            | IF PARENTESIS_IZQ condicion PARENTESIS_DER LLAVE_IZQ bloque LLAVE_DER
             ;
 
-COMPARACION ::= EXPRESION COMPARADOR EXPRESION
+/* Condiciones */
+condicion ::= comparacion
+            | NOT comparacion
+            | condicion AND comparacion
+            | condicion OR comparacion
+            ;
+
+comparacion ::= expresion comparador expresion
               ;
 
-COMPARADOR ::= EQ
+comparador ::= EQ
              | SIMBOLO_MENOR
              | SIMBOLO_MAYOR
              | SIMBOLO_MENOR_O_IGUAL
@@ -195,18 +188,18 @@ COMPARADOR ::= EQ
              ;
 
 /* Iteración */
-ITERACION ::= WHILE PARENTESIS_IZQ CONDICION PARENTESIS_DER LLAVE_IZQ BLOQUE LLAVE_DER
+iteracion ::= WHILE PARENTESIS_IZQ condicion PARENTESIS_DER LLAVE_IZQ bloque LLAVE_DER
             ;
 
-FOR_BUCLE ::= FOR ID IGUAL EXPRESION TO EXPRESION STEP CTE_INT BLOQUE NEXT ID
-             | FOR ID IGUAL EXPRESION TO EXPRESION BLOQUE NEXT ID 
-             | FOR ID ASIG EXPRESION TO EXPRESION BLOQUE NEXT ID   
-             | FOR ID ASIG EXPRESION TO EXPRESION STEP CTE_INT BLOQUE NEXT ID        
+for_bucle ::= FOR ID IGUAL expresion TO expresion STEP CTE_INT bloque NEXT ID
+             | FOR ID IGUAL expresion TO expresion bloque NEXT ID 
+             | FOR ID ASIG expresion TO expresion bloque NEXT ID   
+             | FOR ID ASIG expresion TO expresion STEP CTE_INT bloque NEXT ID        
           ;
 
-SALIDA ::= WRITE PARENTESIS_IZQ CTE_STR PARENTESIS_DER
+salida ::= WRITE PARENTESIS_IZQ CTE_STR PARENTESIS_DER
          | WRITE PARENTESIS_IZQ ID PARENTESIS_DER
          ;
 
-ENTRADA ::= READ PARENTESIS_IZQ ID PARENTESIS_DER
+entrada ::= READ PARENTESIS_IZQ ID PARENTESIS_DER
           ;
