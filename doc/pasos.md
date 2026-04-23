@@ -87,3 +87,16 @@ comparador ::= EQ
 
 
 
+## Comparador distinto `!=`
+
+- En lexer.flex: regla `"!="` que retorna `sym.SIMBOLO_DISTINTO`, junto a los otros comparadores de dos caracteres (`==`, `<=`, `>=`) para que el orden de las reglas sea el adecuado (similar a poner `"="` debajo de `"=="` en la jerarquía de tokens).
+- En parser.cup: terminal `SIMBOLO_DISTINTO` y se lo agregó a `comparador` de esta forma:
+
+comparador ::= EQ
+             | SIMBOLO_DISTINTO
+             | SIMBOLO_MENOR
+             | SIMBOLO_MAYOR
+             | SIMBOLO_MENOR_O_IGUAL
+             | SIMBOLO_MAYOR_O_IGUAL
+             ;
+

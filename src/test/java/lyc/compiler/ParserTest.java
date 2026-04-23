@@ -34,6 +34,11 @@ public class ParserTest {
     }
 
     @Test
+    public void notEqualComparatorInCondition() throws Exception {
+        compilationSuccessful("if (a != b) { x := 1 }");
+    }
+
+    @Test
     public void syntaxError() {
         compilationError("1234");
     }

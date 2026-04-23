@@ -122,6 +122,7 @@ Comment = "#+"([^+]|\+[^#])*"+#"
   } 
   
   "=="        { return symbol(sym.EQ); }
+  "!="        { return symbol(sym.SIMBOLO_DISTINTO); }
   "<="        { return symbol(sym.SIMBOLO_MENOR_O_IGUAL); }
   ">="        { return symbol(sym.SIMBOLO_MAYOR_O_IGUAL); }
 

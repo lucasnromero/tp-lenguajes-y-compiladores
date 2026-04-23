@@ -32,6 +32,7 @@ terminal LLAVE_IZQ;
 terminal LLAVE_DER;
 
 terminal EQ;
+terminal SIMBOLO_DISTINTO;
 terminal NOT;
 terminal ASIG;
 terminal DOS_PUNTOS;
@@ -181,6 +182,7 @@ comparacion ::= expresion comparador expresion
               ;
 
 comparador ::= EQ
+             | SIMBOLO_DISTINTO
              | SIMBOLO_MENOR
              | SIMBOLO_MAYOR
              | SIMBOLO_MENOR_O_IGUAL

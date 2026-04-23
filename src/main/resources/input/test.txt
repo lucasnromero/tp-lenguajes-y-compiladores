@@ -110,6 +110,13 @@ if(x MOD 2 == 0)
   write("Par")
 }
 
+#+ IF con distinto +#
+
+if(x != 0)
+{
+  write("No es cero")
+}
+
 #+ bucle FOR con STEP +#
 
 

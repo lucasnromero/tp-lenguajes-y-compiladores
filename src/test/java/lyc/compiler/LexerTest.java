@@ -185,6 +185,13 @@ public class LexerTest {
   }
 
   @Test
+  public void operatorNotEqual() throws Exception {
+    scan("!=");
+    assertThat(nextToken()).isEqualTo(sym.SIMBOLO_DISTINTO);
+    assertThat(nextToken()).isEqualTo(sym.EOF);
+  }
+
+  @Test
   public void operatorLessThan() throws Exception {
     scan("<");
     assertThat(nextToken()).isEqualTo(sym.SIMBOLO_MENOR);
@@ -483,6 +490,24 @@ public class LexerTest {
     scan("a == b AND c > d OR NOT e <= f");
     assertThat(nextToken()).isEqualTo(sym.ID);
     assertThat(nextToken()).isEqualTo(sym.EQ);
+    assertThat(nextToken()).isEqualTo(sym.ID);
+    assertThat(nextToken()).isEqualTo(sym.AND);
+    assertThat(nextToken()).isEqualTo(sym.ID);
+    assertThat(nextToken()).isEqualTo(sym.SIMBOLO_MAYOR);
+    assertThat(nextToken()).isEqualTo(sym.ID);
+    assertThat(nextToken()).isEqualTo(sym.OR);
+    assertThat(nextToken()).isEqualTo(sym.NOT);
+    assertThat(nextToken()).isEqualTo(sym.ID);
+    assertThat(nextToken()).isEqualTo(sym.SIMBOLO_MENOR_O_IGUAL);
+    assertThat(nextToken()).isEqualTo(sym.ID);
+    assertThat(nextToken()).isEqualTo(sym.EOF);
+  }
+
+  @Test
+  public void conditionWithLogicalOperatorsAndNotEqual() throws Exception {
+    scan("a != b AND c > d OR NOT e <= f");
+    assertThat(nextToken()).isEqualTo(sym.ID);
+    assertThat(nextToken()).isEqualTo(sym.SIMBOLO_DISTINTO);
     assertThat(nextToken()).isEqualTo(sym.ID);
     assertThat(nextToken()).isEqualTo(sym.AND);
     assertThat(nextToken()).isEqualTo(sym.ID);
