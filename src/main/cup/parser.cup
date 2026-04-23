@@ -56,11 +56,8 @@ terminal INIT;
 
 /* Temas especiales */
 terminal FOR;
-terminal IGUAL;
 terminal TO;
 terminal STEP;
-terminal CORCHETE_IZQ;
-terminal CORCHETE_DER;
 terminal NEXT;
 
 terminal DIV;
@@ -193,9 +190,7 @@ comparador ::= EQ
 iteracion ::= WHILE PARENTESIS_IZQ condicion PARENTESIS_DER LLAVE_IZQ bloque LLAVE_DER
             ;
 
-for_bucle ::= FOR ID IGUAL expresion TO expresion STEP CTE_INT bloque NEXT ID
-             | FOR ID IGUAL expresion TO expresion bloque NEXT ID 
-             | FOR ID ASIG expresion TO expresion bloque NEXT ID   
+for_bucle ::= FOR ID ASIG expresion TO expresion bloque NEXT ID   
              | FOR ID ASIG expresion TO expresion STEP CTE_INT bloque NEXT ID        
           ;
 

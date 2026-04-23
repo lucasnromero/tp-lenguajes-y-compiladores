@@ -103,9 +103,9 @@ write(c)
 
 #+ Operacion MOD y DIV +#
 
-x := (10 DIV 3) + (10 MOD 3) 
+x := (10 div 3) + (10 mod 3) 
 
-if(x MOD 2 == 0)
+if(x mod 2 == 0)
 {
   write("Par")
 }
@@ -121,15 +121,13 @@ if(x != 0)
 
 
 
-FOR i := 1 TO 10 STEP 2
+for i := 1 to 10 step 2
    write(i)
-NEXT i
+next i
 
 
 #+ bucle FOR sin STEP (se asume 1 el salto)+#
 
-
-
-FOR i := 1 TO 5
+for i := 1 to 5
    write(i)
-NEXT i 
+next i 
