@@ -132,16 +132,48 @@ bloque ::= bloque sentencia
          ;
 
 sentencia ::= seleccion
+{:
+    System.out.println();
+    System.out.println("REDUCE: sentencia -> seleccion");
+:}
             | iteracion
+{:
+    System.out.println();
+    System.out.println("REDUCE: sentencia -> iteracion");
+:}
             | asignacion
+{:
+    System.out.println();
+    System.out.println("REDUCE: sentencia -> asignacion");
+:}
             | salida
+{:
+    System.out.println();
+    System.out.println("REDUCE: sentencia -> salida");
+:}
             | entrada
+{:
+    System.out.println();
+    System.out.println("REDUCE: sentencia -> entrada");
+:}
             | for_bucle
+{:
+    System.out.println();
+    System.out.println("REDUCE: sentencia -> for_bucle");
+:}
             ;
 
 /* Asignación */
 asignacion ::= ID ASIG expresion
+{:
+    System.out.println();
+    System.out.println("REDUCE: asignacion -> ID := expresion");
+:}
              | ID ASIG CTE_STR
+{:
+    System.out.println();
+    System.out.println("REDUCE: asignacion -> ID := CTE_STR");
+:}
              ;
 
 /* Expresiones */
@@ -165,7 +197,15 @@ factor ::= PARENTESIS_IZQ expresion PARENTESIS_DER
 
 /* Condicionales */
 seleccion ::= IF PARENTESIS_IZQ condicion PARENTESIS_DER LLAVE_IZQ bloque LLAVE_DER ELSE LLAVE_IZQ bloque LLAVE_DER
+{:
+    System.out.println();
+    System.out.println("REDUCE: seleccion -> IF (condicion) {bloque} ELSE {bloque}");
+:}
             | IF PARENTESIS_IZQ condicion PARENTESIS_DER LLAVE_IZQ bloque LLAVE_DER
+{:
+    System.out.println();
+    System.out.println("REDUCE: seleccion -> IF (condicion) {bloque}");
+:}
             ;
 
 /* Condiciones */
@@ -188,15 +228,39 @@ comparador ::= EQ
 
 /* Iteración */
 iteracion ::= WHILE PARENTESIS_IZQ condicion PARENTESIS_DER LLAVE_IZQ bloque LLAVE_DER
+{:
+    System.out.println();
+    System.out.println("REDUCE: iteracion -> WHILE (condicion) {bloque}");
+:}
             ;
 
-for_bucle ::= FOR ID ASIG expresion TO expresion bloque NEXT ID   
-             | FOR ID ASIG expresion TO expresion STEP CTE_INT bloque NEXT ID        
-          ;
+for_bucle ::= FOR ID ASIG expresion TO expresion bloque NEXT ID
+{:
+    System.out.println();
+    System.out.println("REDUCE: for_bucle -> FOR ID := expresion TO expresion bloque NEXT ID");
+:}
+           | FOR ID ASIG expresion TO expresion STEP CTE_INT bloque NEXT ID
+{:
+    System.out.println();
+    System.out.println("REDUCE: for_bucle -> FOR ID := expresion TO expresion STEP CTE_INT bloque NEXT ID");
+:}
+           ;
 
 salida ::= WRITE PARENTESIS_IZQ CTE_STR PARENTESIS_DER
+{:
+    System.out.println();
+    System.out.println("REDUCE: salida -> WRITE (CTE_STR)");
+:}
          | WRITE PARENTESIS_IZQ ID PARENTESIS_DER
+{:
+    System.out.println();
+    System.out.println("REDUCE: salida -> WRITE (ID)");
+:}
          ;
 
 entrada ::= READ PARENTESIS_IZQ ID PARENTESIS_DER
+{:
+    System.out.println();
+    System.out.println("REDUCE: entrada -> READ (ID)");
+:}
           ;
