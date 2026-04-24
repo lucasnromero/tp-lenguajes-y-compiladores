@@ -131,3 +131,80 @@ next i
 for i := 1 to 5
    write(i)
 next i 
+
+
+
+
+#+ Este deberia dar error pero no da
+ERROR: La variable del NEXT no coincide con la del FOR
++#
+
+
+for i := 1 to 5
+   write(i)
+next j
+
+
+
+
+#+
+ERROR: STEP debe ser una constante entera
++#
+
+#+
+for i := 1 to 10 step 2.5
+   write(i)
+next i
++#
+
+
+
+
+#+
+ERROR: STEP no puede ser negativo
++#
+
+#+
+for i := 1 to 10 step -1
+   write(i)
+next i
++#
+
+#+
+ERROR: Operador DIV solo valido para enteros
++#
+#+
+x := "hola" div 2
++#
+
+#+
+ERROR: Operador MOD solo valido para enteros
++#
+#+
+x := 10.5 mod 3
++#
+
+#+
+ERROR: Falta palabra clave TO en FOR
++#
+#+
+for i := 1 10
+   write(i)
+next i
++#
+
+#+
+ERROR: Falta operador := en FOR
++#
+#+
+for i 1 to 10
+   write(i)
+next i
++#
+
+#+
+ERROR: Division por cero no permitida
++#
+#+
+x := 10 / 0
++#

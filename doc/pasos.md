@@ -100,3 +100,15 @@ comparador ::= EQ
              | SIMBOLO_MAYOR_O_IGUAL
              ;
 
+
+
+##Test de error
+- Se agregan los siguientes test que prueban que errores en los temas especiales, en test.txt estan comentados, y se agregan en ParserTest.java como compilationError
+
+stepError: El step no puede ser distinto a int
+stepNegativeError: Los pasos no pueden ser negativos
+divError: Deben ser dos enteros los que se dividen
+toError: Falta de "to"
+asignacionError: Falta de ":="
+divisionByZeroError: No se puede dividir por cero, debe dar error
+variableNextError: El lexema de id que se asigna en for id := cte, debe ser el mismo lexema que se usa en next
