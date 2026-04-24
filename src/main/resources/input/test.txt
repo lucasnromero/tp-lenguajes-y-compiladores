@@ -205,6 +205,5 @@ next i
 #+
 ERROR: Division por cero no permitida
 +#
-#+
-x := 10 / 0
-+#
+
+x := 10 DIV 0

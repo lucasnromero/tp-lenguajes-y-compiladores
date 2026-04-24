@@ -123,10 +123,10 @@ public class ParserTest {
     //    compilationError("for i := 1 to 5 write(i) next j");
     //}
 
-    //@Test
-    //public void divisionByZeroError() {
-    //    compilationError("x := 10 / 0");
-    //}
+    @Test
+    public void divisionByZeroError() {
+        compilationError("x := 10 DIV 0");
+    }
 
 
     private void compilationSuccessful(String input) throws Exception {
