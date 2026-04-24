@@ -1,1 +1,209 @@
-c=d*(e-21)/4
+#+ TEMAS COMUNES +#
+
+
+#+ caso bloque de incicializacion, donde se declaran los tipos de datos de las variables +#
+
+init {
+    a1, b1 : Float
+    variable1 : Int
+    p1, p2, p3 : String
+}
+
+#+ operaciones aritmeticas +#
+
+x := 27 - c
+x := r + 500
+x := 34 * 3
+x := z / f
+
+#+ distinto tipos de asignaciones (flotante, entera y string) +#
+a := 99999.99
+a := 99.
+a := .9999
+a := 2
+
+b := "@sdADaSjfla%dfg"
+b := "asldk  fh sjf"
+
+#+ IF con else +#
+
+if (a > b)
+{
+    write("a es mas grande que b")
+}
+else
+{
+    write("a es mas chico o igual a b")
+}
+#+ IF con NOT +#
+a := 1
+b := 1
+c := 2
+
+if (NOT a > b)
+{
+    write("a no es mas grande que b")
+}
+
+
+#+ IF con OR +#
+
+
+a := 1
+b := 1
+c := 2
+
+if (a > b OR c > b)
+{
+    write("a es mas grande que b o c es mas grande que b")
+}
+
+#+ IF con AND +#
+
+if (a > b AND c > b)
+{
+    write("a es mas grande que b y c es mas grande que b")
+}
+
+#+ Sentencia read, donde "a" es una variable +#
+
+read(a)
+
+
+#+ iteracion con WHILE +#
+
+
+a := 1
+b := 3
+
+while (a > b)
+{
+    write("a es mas grande que b")
+    a := a + 1
+}
+
+while (NOT a > b)
+{
+    write("a es mas grande que b")
+    a := a + 1
+}
+
+#+ Sentencia write, donde """hola""" es una constante de tipo string, y "c" es una variable +#
+
+
+write("hola")  
+write(c)  
+
+
+
+
+
+#+ TEMAS ESPECIALES +#
+
+
+#+ Operacion MOD y DIV +#
+
+x := (10 div 3) + (10 mod 3) 
+
+if(x mod 2 == 0)
+{
+  write("Par")
+}
+
+#+ IF con distinto +#
+
+if(x != 0)
+{
+  write("No es cero")
+}
+
+#+ bucle FOR con STEP +#
+
+
+
+for i := 1 to 10 step 2
+   write(i)
+next i
+
+
+#+ bucle FOR sin STEP (se asume 1 el salto)+#
+
+for i := 1 to 5
+   write(i)
+next i 
+
+
+
+
+#+ Este deberia dar error pero no da
+ERROR: La variable del NEXT no coincide con la del FOR
++#
+
+
+for i := 1 to 5
+   write(i)
+next j
+
+
+
+
+#+
+ERROR: STEP debe ser una constante entera
++#
+
+#+
+for i := 1 to 10 step 2.5
+   write(i)
+next i
++#
+
+
+
+
+#+
+ERROR: STEP no puede ser negativo
++#
+
+#+
+for i := 1 to 10 step -1
+   write(i)
+next i
++#
+
+#+
+ERROR: Operador DIV solo valido para enteros
++#
+#+
+x := "hola" div 2
++#
+
+#+
+ERROR: Operador MOD solo valido para enteros
++#
+#+
+x := 10.5 mod 3
++#
+
+#+
+ERROR: Falta palabra clave TO en FOR
++#
+#+
+for i := 1 10
+   write(i)
+next i
++#
+
+#+
+ERROR: Falta operador := en FOR
++#
+#+
+for i 1 to 10
+   write(i)
+next i
++#
+
+#+
+ERROR: Division por cero no permitida
++#
+
+x := 10 DIV 0

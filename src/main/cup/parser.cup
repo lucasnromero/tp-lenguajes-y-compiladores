@@ -2,38 +2,265 @@ package lyc.compiler;
 
 import java_cup.runtime.*;
 
-class Parser;
+parser code {:
+  public void report_error(String message, Object info) {
+    System.err.println("Syntax error: " + message);
+  }
+:};
 
+action code {:
+:};
 
-// Terminals
-terminal ASSIG;
-terminal PLUS;
-terminal SUB;
-terminal MULT;
+/* Terminals */
+terminal ID;
+terminal CTE_INT;
+terminal CTE_FLOAT;
+terminal CTE_STR;
+
+terminal IF;
+terminal ELSE;
+terminal WHILE;
+
+terminal SIMBOLO_MAS;
+terminal SIMBOLO_MENOS;
+terminal ASTERISCO;
+terminal BARRA_DIAGONAL;
+
+terminal PARENTESIS_IZQ;
+terminal PARENTESIS_DER;
+terminal LLAVE_IZQ;
+terminal LLAVE_DER;
+
+terminal EQ;
+terminal SIMBOLO_DISTINTO;
+terminal NOT;
+terminal ASIG;
+terminal DOS_PUNTOS;
+terminal SIMBOLO_MENOR;
+terminal SIMBOLO_MAYOR;
+terminal SIMBOLO_MENOR_O_IGUAL;
+terminal SIMBOLO_MAYOR_O_IGUAL;
+
+terminal INT;
+terminal STRING;
+terminal FLOAT;
+
+terminal COMA;
+
+terminal AND;
+terminal OR;
+
+terminal READ;
+terminal WRITE;
+terminal INIT;
+
+/* Temas especiales */
+terminal FOR;
+terminal TO;
+terminal STEP;
+terminal NEXT;
+
 terminal DIV;
-terminal OPEN_BRACKET;
-terminal CLOSE_BRACKET;
-terminal INTEGER_CONSTANT;
-terminal IDENTIFIER;
+terminal MOD;
 
-// Non Terminals
-non terminal sentence;
-non terminal assignment;
-non terminal expression;
-non terminal term;
-non terminal factor;
+/* Non terminals */
+non terminal Object programa;
+non terminal Object bloque_init;
+non terminal Object bloque;
+non terminal Object sentencia;
 
-// Start Symbol Definition
-start with sentence;
+non terminal Object asignacion;
+non terminal Object expresion;
+non terminal Object termino;
+non terminal Object factor;
 
-sentence ::= assignment {: System.out.println("End"); :};
-assignment ::= IDENTIFIER ASSIG expression {: System.out.println("Assignment"); :};
-expression ::= expression PLUS term {: System.out.println("+"); :};
-expression ::= expression SUB term {: System.out.println("-"); :};
-expression ::= term {: System.out.println("Expression = Term"); :};
-term ::= term MULT factor {: System.out.println("*"); :};
-term ::= term DIV factor {: System.out.println("/"); :};
-term ::= factor {: System.out.println("Term = factor"); :};
-factor ::= IDENTIFIER:id  {: System.out.println("Id: " + id); :};
-factor ::= INTEGER_CONSTANT:constant {: System.out.println("Constant: " + constant ); :};
-factor ::= OPEN_BRACKET expression CLOSE_BRACKET {: System.out.println("Factor = (Expression)"); :};
+non terminal Object seleccion;
+non terminal Object condicion;
+non terminal Object comparacion;
+non terminal Object comparador;
+
+non terminal Object iteracion;
+
+non terminal Object salida;
+non terminal Object entrada;
+
+non terminal Object declaraciones;
+non terminal Object declaracion;
+non terminal Object lista_variables;
+non terminal Object tipo_dato;
+non terminal Object for_bucle;
+
+/* Temas especiales */
+
+
+
+/* Start */
+start with programa;
+
+
+
+/* Grammar */
+
+programa ::= bloque_init bloque
+            | bloque_init
+            | bloque
+            | 
+           ;
+
+bloque_init ::= INIT LLAVE_IZQ declaraciones LLAVE_DER
+              ;
+
+declaraciones ::= declaraciones declaracion
+                | declaracion
+                ;
+
+declaracion ::= lista_variables DOS_PUNTOS tipo_dato
+              ;
+
+lista_variables ::= lista_variables COMA ID
+                  | ID
+                  ;
+
+tipo_dato ::= INT
+            | FLOAT
+            | STRING
+            ;
+
+/* Bloque de sentencias */
+bloque ::= bloque sentencia
+         | sentencia
+         ;
+
+sentencia ::= seleccion
+{:
+    System.out.println();
+    System.out.println("REDUCE: sentencia -> seleccion");
+:}
+            | iteracion
+{:
+    System.out.println();
+    System.out.println("REDUCE: sentencia -> iteracion");
+:}
+            | asignacion
+{:
+    System.out.println();
+    System.out.println("REDUCE: sentencia -> asignacion");
+:}
+            | salida
+{:
+    System.out.println();
+    System.out.println("REDUCE: sentencia -> salida");
+:}
+            | entrada
+{:
+    System.out.println();
+    System.out.println("REDUCE: sentencia -> entrada");
+:}
+            | for_bucle
+{:
+    System.out.println();
+    System.out.println("REDUCE: sentencia -> for_bucle");
+:}
+            ;
+
+/* Asignación */
+asignacion ::= ID ASIG expresion
+{:
+    System.out.println();
+    System.out.println("REDUCE: asignacion -> ID := expresion");
+:}
+             | ID ASIG CTE_STR
+{:
+    System.out.println();
+    System.out.println("REDUCE: asignacion -> ID := CTE_STR");
+:}
+             ;
+
+/* Expresiones */
+expresion ::= expresion SIMBOLO_MAS termino
+            | expresion SIMBOLO_MENOS termino
+            | termino
+            ;
+
+termino ::= termino ASTERISCO factor
+          | termino BARRA_DIAGONAL factor
+          | termino DIV factor
+          | termino MOD factor
+          | factor
+          ;
+
+factor ::= PARENTESIS_IZQ expresion PARENTESIS_DER
+         | ID
+         | CTE_INT
+         | CTE_FLOAT
+         ;
+
+/* Condicionales */
+seleccion ::= IF PARENTESIS_IZQ condicion PARENTESIS_DER LLAVE_IZQ bloque LLAVE_DER ELSE LLAVE_IZQ bloque LLAVE_DER
+{:
+    System.out.println();
+    System.out.println("REDUCE: seleccion -> IF (condicion) {bloque} ELSE {bloque}");
+:}
+            | IF PARENTESIS_IZQ condicion PARENTESIS_DER LLAVE_IZQ bloque LLAVE_DER
+{:
+    System.out.println();
+    System.out.println("REDUCE: seleccion -> IF (condicion) {bloque}");
+:}
+            ;
+
+/* Condiciones */
+condicion ::= comparacion
+            | NOT comparacion
+            | condicion AND comparacion
+            | condicion OR comparacion
+            ;
+
+comparacion ::= expresion comparador expresion
+              ;
+
+comparador ::= EQ
+             | SIMBOLO_DISTINTO
+             | SIMBOLO_MENOR
+             | SIMBOLO_MAYOR
+             | SIMBOLO_MENOR_O_IGUAL
+             | SIMBOLO_MAYOR_O_IGUAL
+             ;
+
+/* Iteración */
+iteracion ::= WHILE PARENTESIS_IZQ condicion PARENTESIS_DER LLAVE_IZQ bloque LLAVE_DER
+{:
+    System.out.println();
+    System.out.println("REDUCE: iteracion -> WHILE (condicion) {bloque}");
+:}
+            ;
+
+for_bucle ::= FOR ID ASIG expresion TO expresion bloque NEXT ID
+{:
+    System.out.println();
+    System.out.println("REDUCE: for_bucle -> FOR ID := expresion TO expresion bloque NEXT ID");
+:}
+           | FOR ID ASIG expresion TO expresion STEP CTE_INT bloque NEXT ID
+{:
+    System.out.println();
+    System.out.println("REDUCE: for_bucle -> FOR ID := expresion TO expresion STEP CTE_INT bloque NEXT ID");
+:}
+           ;
+
+salida ::= WRITE PARENTESIS_IZQ CTE_STR PARENTESIS_DER
+{:
+    System.out.println();
+    System.out.println("REDUCE: salida -> WRITE (CTE_STR)");
+:}
+         | WRITE PARENTESIS_IZQ ID PARENTESIS_DER
+{:
+    System.out.println();
+    System.out.println("REDUCE: salida -> WRITE (ID)");
+:}
+         ;
+
+entrada ::= READ PARENTESIS_IZQ ID PARENTESIS_DER
+{:
+    System.out.println();
+    System.out.println("REDUCE: entrada -> READ (ID)");
+:}
+          ;

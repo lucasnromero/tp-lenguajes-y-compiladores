@@ -4,3 +4,5 @@
 /build.xml
 /cup-java-minijava.iml
 git branch -M main
+extras/
+run-win.bat
