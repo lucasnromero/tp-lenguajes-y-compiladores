@@ -20,17 +20,17 @@ public class ParserTest {
 
     @Test
     public void forTest() throws Exception {
-        compilationSuccessful("FOR  a=3 TO 5 b:=3 b:=3+5 NEXT a");
+        compilationSuccessful("for  a:=3 to 5 b:=3 b:=3+5 next a");
     }
 
     @Test
     public void forWithStepTest() throws Exception {
-        compilationSuccessful("FOR  i=0 TO 5 STEP 2 read(b) b:=3+5 NEXT i");
+        compilationSuccessful("for i:=0 to 5 step 2 read(b) b:=3+5 next i");
     }
 
     @Test
     public void divAndMod() throws Exception {
-        compilationSuccessful("x := (10 DIV 3) + (10 MOD 3)");
+        compilationSuccessful("x := (10 div 3) + (10 mod 3)");
     }
 
     @Test

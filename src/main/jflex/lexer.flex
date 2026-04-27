@@ -105,14 +105,12 @@ Comment = "#+"([^+]|\+[^#])*"+#"
   "OR"        { return symbol(sym.OR); }
   "NOT"       { return symbol(sym.NOT); }
 
-  "TO"        { return symbol(sym.TO); }
-  "STEP"      { return symbol(sym.STEP); }
-  "["         { return symbol(sym.CORCHETE_IZQ); }
-  "]"         { return symbol(sym.CORCHETE_DER); }
-  "NEXT"      { return symbol(sym.NEXT); }
-  "DIV"       { return symbol(sym.DIV); }
-  "MOD"       { return symbol(sym.MOD); }
-  "FOR"       { return symbol(sym.FOR); }      
+  "to"        { return symbol(sym.TO); }
+  "step"      { return symbol(sym.STEP); }
+  "next"      { return symbol(sym.NEXT); }
+  "div"       { return symbol(sym.DIV); }
+  "mod"       { return symbol(sym.MOD); }
+  "for"       { return symbol(sym.FOR); }      
 
   /* Operators */
   -{Digit}+ {
@@ -121,6 +119,7 @@ Comment = "#+"([^+]|\+[^#])*"+#"
     return symbol(sym.SIMBOLO_MENOS);
   } 
   
+  "!="        { return symbol(sym.SIMBOLO_DISTINTO); }
   "=="        { return symbol(sym.EQ); }
   "<="        { return symbol(sym.SIMBOLO_MENOR_O_IGUAL); }
   ">="        { return symbol(sym.SIMBOLO_MAYOR_O_IGUAL); }
@@ -134,7 +133,6 @@ Comment = "#+"([^+]|\+[^#])*"+#"
   ">"         { return symbol(sym.SIMBOLO_MAYOR); }
 
   ":="        { return symbol(sym.ASIG); }
-  "="         { return symbol(sym.IGUAL); }
   ":"         { return symbol(sym.DOS_PUNTOS); }
 
   "("         { return symbol(sym.PARENTESIS_IZQ); }
@@ -177,7 +175,9 @@ Comment = "#+"([^+]|\+[^#])*"+#"
     return symbol(sym.ID, yytext());}
 
   
-  {WhiteSpace} { /* ignore */ }
+  {WhiteSpace} {
+    if (yytext().contains("\n")) System.out.println();
+  }
  
 }
 

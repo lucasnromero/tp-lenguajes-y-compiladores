@@ -24,6 +24,7 @@ public final class Compiler {
             parser parser = ParserFactory.create(reader);
             parser.parse();
             int i = 0;
+            System.out.println();
             for (Terceto t : TercetoManager.getAll()) {
                 System.out.println("[" + i + "] " + t);
                 i++;

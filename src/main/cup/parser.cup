@@ -43,6 +43,7 @@ terminal SIMBOLO_MENOR;
 terminal SIMBOLO_MAYOR;
 terminal SIMBOLO_MENOR_O_IGUAL;
 terminal SIMBOLO_MAYOR_O_IGUAL;
+terminal SIMBOLO_DISTINTO;
 
 terminal INT;
 terminal STRING;
@@ -59,77 +60,97 @@ terminal INIT;
 
 /* Temas especiales */
 terminal FOR;
-terminal IGUAL;
 terminal TO;
 terminal STEP;
-terminal CORCHETE_IZQ;
-terminal CORCHETE_DER;
 terminal NEXT;
 
 terminal DIV;
 terminal MOD;
 
 /* Non terminals */
-non terminal Object PROGRAMA;
-non terminal Object BLOQUE_INIT;
-non terminal Object BLOQUE;
-non terminal Object SENTENCIA;
+non terminal Object programa;
+non terminal Object bloque_init;
+non terminal Object bloque;
+non terminal Object sentencia;
 
-non terminal String ASIG_SIMPLE;
-non terminal String ASIG_STRING;
-non terminal String EXPRESION;
-non terminal String TERMINO;
-non terminal String FACTOR;
+non terminal String asig_simple;
+non terminal String asig_string;
+non terminal String expresion;
+non terminal String termino;
+non terminal String factor;
 
-non terminal Object COND_SIN_ELSE;
-non terminal Object COND_CON_ELSE;
-non terminal String CONDICION;
-non terminal String COMPARACION;
-non terminal String COMPARADOR;
+non terminal Object cond_sin_else;
+non terminal Object cond_con_else;
+non terminal String condicion;
+non terminal String comparacion;
+non terminal String comparador;
 
-non terminal Object ITERACION;
+non terminal Object iteracion;
 
-non terminal Object SALIDA;
-non terminal Object ENTRADA;
+non terminal Object salida;
+non terminal Object entrada;
 
-non terminal Object DECLARACIONES;
-non terminal Object DECLARACION;
-non terminal List<String> LISTA_VARIABLES;
-non terminal String TIPO_DATO;
-non terminal Object FOR_BUCLE;
+non terminal Object declaraciones;
+non terminal Object declaracion;
+non terminal List<String> lista_variables;
+non terminal String tipo_dato;
+non terminal Object for_bucle;
 /* reglas auxiliares */
-non terminal Integer GEN_BF;
-non terminal Integer GEN_BT;
-non terminal Integer GEN_BI;
-non terminal Integer M;
-non terminal Integer STEP_OPCIONAL;
+non terminal Integer gen_bf;
+non terminal Integer gen_bi;
+non terminal Integer m;
+non terminal Integer step_opcional;
 
 /* Temas especiales */
-
+precedence left OR;
+precedence left AND;
+precedence right NOT;
 
 
 /* Start */
-start with PROGRAMA;
+start with programa;
 
 
 
 /* Grammar */
 
-PROGRAMA ::= BLOQUE_INIT BLOQUE
-            | BLOQUE_INIT
-            | BLOQUE
+programa ::= bloque_init bloque
+            {:
+                System.out.println("programa -> bloque_init bloque");
+            :}
+            | bloque_init
+            {:
+                System.out.println("programa -> bloque_init");
+            :}
+            | bloque
+            {:
+                System.out.println("programa -> bloque");
+            :}
             | 
+            {:
+                System.out.println("programa -> epsilon");
+            :}
            ;
 
-BLOQUE_INIT ::= INIT LLAVE_IZQ DECLARACIONES LLAVE_DER
+bloque_init ::= INIT LLAVE_IZQ declaraciones LLAVE_DER
+              {:
+                  System.out.println("bloque_init -> INIT LLAVE_IZQ declaraciones LLAVE_DER");
+              :}
               ;
 
-DECLARACIONES ::= DECLARACIONES DECLARACION
-                | DECLARACION
+declaraciones ::= declaraciones declaracion
+                {:
+                    System.out.println("declaraciones -> declaraciones declaracion");
+                :}
+                | declaracion
+                {:
+                    System.out.println("declaraciones -> declaracion");
+                :}
                 ;
 
-DECLARACION ::= LISTA_VARIABLES:vars DOS_PUNTOS TIPO_DATO:tipo
+declaracion ::= lista_variables:vars DOS_PUNTOS tipo_dato:tipo
             {:
+                System.out.println("declaracion -> lista_variables DOS_PUNTOS tipo_dato");
                 for(String v : vars) {
                     SymbolTableEntry entry = SymbolTable.get(v);
                     entry.setType(tipo);
@@ -137,42 +158,51 @@ DECLARACION ::= LISTA_VARIABLES:vars DOS_PUNTOS TIPO_DATO:tipo
             :}
             ;
 
-LISTA_VARIABLES ::= LISTA_VARIABLES:l COMA ID:id
+lista_variables ::= lista_variables:l COMA ID:id
             {:
+                System.out.println("lista_variables -> lista_variables COMA ID");
                 l.add( id);
                 RESULT = l;
             :}
           | ID:id
             {:
+                System.out.println("lista_variables -> ID");
                 java.util.List<String> lista = new java.util.ArrayList<>();
                 lista.add(id);
                 RESULT = lista;
             :}
           ;
 
-TIPO_DATO ::= INT    {: RESULT = "Int"; :}
-            | FLOAT  {: RESULT = "Float"; :}
-            | STRING {: RESULT = "String"; :}
+tipo_dato ::= INT    {: System.out.println("tipo_dato -> INT"); RESULT = "Int"; :}
+            | FLOAT  {: System.out.println("tipo_dato -> FLOAT"); RESULT = "Float"; :}
+            | STRING {: System.out.println("tipo_dato -> STRING"); RESULT = "String"; :}
             ;
 
 /* Bloque de sentencias */
-BLOQUE ::= BLOQUE SENTENCIA
-         | SENTENCIA
+bloque ::= bloque sentencia
+         {:
+             System.out.println("bloque -> bloque sentencia");
+         :}
+         | sentencia
+         {:
+             System.out.println("bloque -> sentencia");
+         :}
          ;
 
-SENTENCIA ::= COND_SIN_ELSE
-            | COND_CON_ELSE
-            | ITERACION
-            | ASIG_SIMPLE
-            | ASIG_STRING
-            | SALIDA
-            | ENTRADA
-            | FOR_BUCLE
+sentencia ::= cond_sin_else
+            | cond_con_else
+            | iteracion
+            | asig_simple
+            | asig_string
+            | salida
+            | entrada
+            | for_bucle
             ;
 
 /* Asignación */
-ASIG_SIMPLE ::= ID:id ASIG EXPRESION:e
+asig_simple ::= ID:id ASIG expresion:e
             {:
+                System.out.println("asig_simple -> ID ASIG expresion");
                 SymbolTableEntry entry = SymbolTable.get(id);
                 if((entry.getType()) == "String") throw new RuntimeException("tipo de dato incorrecto");
                 TercetoManager.add(":=", id, e);
@@ -180,164 +210,184 @@ ASIG_SIMPLE ::= ID:id ASIG EXPRESION:e
             ;
 
 /* Expresiones */
-EXPRESION ::= EXPRESION:e SIMBOLO_MAS TERMINO:t
+expresion ::= expresion:e SIMBOLO_MAS termino:t
             {:
+                System.out.println("expresion -> expresion SIMBOLO_MAS termino");
                 int i = TercetoManager.add("+", e, t);
                 RESULT = TercetoManager.ref(i);
             :}
-           | EXPRESION:e SIMBOLO_MENOS TERMINO:t
+           | expresion:e SIMBOLO_MENOS termino:t
             {:
+                System.out.println("expresion -> expresion SIMBOLO_MENOS termino");
                 int i = TercetoManager.add("-", e, t);
                 RESULT = TercetoManager.ref(i);
             :}
-           | TERMINO:t
-            {: RESULT = t; :}
+           | termino:t
+            {:
+                System.out.println("expresion -> termino");
+                RESULT = t;
+            :}
            ;
 
-TERMINO ::= TERMINO:t ASTERISCO FACTOR:f
+termino ::= termino:t ASTERISCO factor:f
             {:
+                System.out.println("termino -> termino ASTERISCO factor");
                 int i = TercetoManager.add("*", t, f);
                 RESULT = TercetoManager.ref(i);
             :}
-         | TERMINO:t BARRA_DIAGONAL FACTOR:f
+         | termino:t BARRA_DIAGONAL factor:f
             {:
+                System.out.println("termino -> termino BARRA_DIAGONAL factor");
                 int i = TercetoManager.add("/", t, f);
                 RESULT = TercetoManager.ref(i);
             :}
-         | TERMINO:t DIV FACTOR:f
+         | termino:t DIV factor:f
             {:
+                System.out.println("termino -> termino DIV factor");
                 int i = TercetoManager.add("DIV", t, f);
                 RESULT = TercetoManager.ref(i);
             :}
-         | TERMINO:t MOD FACTOR:f
+         | termino:t MOD factor:f
             {:
+                System.out.println("termino -> termino MOD factor");
                 int i = TercetoManager.add("MOD", t, f);
                 RESULT = TercetoManager.ref(i);
             :}
-         | FACTOR:f
-            {: RESULT = f; :}
-         ;
-
-FACTOR ::= PARENTESIS_IZQ EXPRESION:e PARENTESIS_DER
-            {: RESULT = e; :}
-         | ID:id
-            {: RESULT = id; :}
-         | CTE_INT:c
-            {: RESULT = c.toString(); :}
-         | CTE_FLOAT:f
-            {: RESULT = f.toString(); :}
-         ;
-
-ASIG_STRING ::= ID:id ASIG CTE_STR:cte 
+         | factor:f
             {:
+                System.out.println("termino -> factor");
+                RESULT = f;
+            :}
+         ;
+
+factor ::= PARENTESIS_IZQ expresion:e PARENTESIS_DER
+            {:
+                System.out.println("factor -> PARENTESIS_IZQ expresion PARENTESIS_DER");
+                RESULT = e;
+            :}
+         | ID:id
+            {:
+                System.out.println("factor -> ID");
+                RESULT = id;
+            :}
+         | CTE_INT:c
+            {:
+                System.out.println("factor -> CTE_INT");
+                RESULT = c.toString();
+            :}
+         | CTE_FLOAT:f
+            {:
+                System.out.println("factor -> CTE_FLOAT");
+                RESULT = f.toString();
+            :}
+         ;
+
+asig_string ::= ID:id ASIG CTE_STR:cte 
+            {:
+                System.out.println("asig_string -> ID ASIG CTE_STR");
                 SymbolTableEntry entry = SymbolTable.get(id);
                 if((entry.getType())  != "String") throw new RuntimeException("tipo de dato incorrecto");
                 TercetoManager.add(":=", id, cte);
             :}
               ;
 /* Condicionales */
-COND_CON_ELSE ::= IF PARENTESIS_IZQ GEN_BF:bf PARENTESIS_DER
-                  LLAVE_IZQ BLOQUE LLAVE_DER
-                  GEN_BI:bi
-                  ELSE M:inicioElse LLAVE_IZQ BLOQUE LLAVE_DER
-{:
-    // parchear BF al inicio del else
-    TercetoManager.patch(bf, 2, TercetoManager.ref(inicioElse));
 
-    // parchear BI al final del else
-    int fin = TercetoManager.nextIndex();
-    TercetoManager.patch(bi, 2, TercetoManager.ref(fin));
-:}
+cond_con_else ::=
+    IF PARENTESIS_IZQ gen_bf:bf PARENTESIS_DER
+    LLAVE_IZQ bloque LLAVE_DER
+    gen_bi:bi
+    ELSE m:inicioElse LLAVE_IZQ bloque LLAVE_DER
+    {:
+        System.out.println("cond_con_else -> IF PARENTESIS_IZQ gen_bf PARENTESIS_DER LLAVE_IZQ bloque LLAVE_DER gen_bi ELSE m LLAVE_IZQ bloque LLAVE_DER");
+        // si la condición fue falsa, salto al ELSE
+        TercetoManager.patch(bf, 2, TercetoManager.ref(inicioElse));
+
+        // salto para saltear el ELSE cuando termina el IF
+        int fin = TercetoManager.nextIndex();
+        TercetoManager.patch(bi, 2, TercetoManager.ref(fin));
+    :}
 ;
 
-COND_CON_ELSE ::= IF PARENTESIS_IZQ NOT GEN_BT:bt PARENTESIS_DER
-                  LLAVE_IZQ BLOQUE LLAVE_DER
-                  GEN_BI:bi
-                  ELSE M:inicioElse LLAVE_IZQ BLOQUE LLAVE_DER
-{:
-    // parchear BT al inicio del else
-    TercetoManager.patch(bt, 2, TercetoManager.ref(inicioElse));
 
-    // parchear BI al final del else
-    int fin = TercetoManager.nextIndex();
-    TercetoManager.patch(bi, 2, TercetoManager.ref(fin));
-:}
-;
-
-M ::= /* REGLA AUXILIAR */
+m ::=
 {:
     RESULT = TercetoManager.nextIndex();
 :}
 ;
 
-GEN_BI ::= /* REGLA AUXILIAR */
+gen_bf ::= condicion:c
 {:
-    int bi = TercetoManager.add("bi", "-", "??");
+    int bf = TercetoManager.add("BF", c, "??");
+    RESULT = bf;
+:}
+;
+
+gen_bi ::=
+{:
+    int bi = TercetoManager.add("BI", "-", "??");
     RESULT = bi;
 :}
 ;
 
-COND_SIN_ELSE ::= IF PARENTESIS_IZQ GEN_BF:bf PARENTESIS_DER LLAVE_IZQ BLOQUE LLAVE_DER
-                {:
-                int next = TercetoManager.nextIndex();
-                TercetoManager.patch(bf, 2, TercetoManager.ref(next));
-                :}
-                ;
-
-COND_SIN_ELSE ::= IF PARENTESIS_IZQ NOT GEN_BT:bt PARENTESIS_DER LLAVE_IZQ BLOQUE LLAVE_DER
-                {:
-                int next = TercetoManager.nextIndex();
-                TercetoManager.patch(bt, 2, TercetoManager.ref(next));
-                :}
-                ;               
-
-
-GEN_BF ::= CONDICION:c /* REGLA AUXILIAR */
-{:
-    int bfIndex = TercetoManager.add("BF", c, "??");
-    RESULT = bfIndex;
-:}
+cond_sin_else ::=
+    IF PARENTESIS_IZQ gen_bf:bf PARENTESIS_DER
+    LLAVE_IZQ bloque LLAVE_DER
+    {:
+        System.out.println("cond_sin_else -> IF PARENTESIS_IZQ gen_bf PARENTESIS_DER LLAVE_IZQ bloque LLAVE_DER");
+        int next = TercetoManager.nextIndex();
+        TercetoManager.patch(bf, 2, TercetoManager.ref(next));
+    :}
 ;
 
-GEN_BT ::= CONDICION:c /* REGLA AUXILIAR */
-{:
-    int bt = TercetoManager.add("BT", c, "??");
-    RESULT = bt;
-:}
-;
 
 /* Condiciones */
-CONDICION ::= COMPARACION:c
-            {: RESULT = c; :}
-            | COMPARACION:c1 AND COMPARACION:c2
+condicion ::= comparacion:c
             {:
+                System.out.println("condicion -> comparacion");
+                RESULT = c;
+            :}
+            |
+            NOT condicion:c
+            {:
+                System.out.println("condicion -> NOT condicion");
+                int i = TercetoManager.add("NOT", c, "-");
+                RESULT = TercetoManager.ref(i);    
+            :}  
+            | condicion:c1 AND condicion:c2
+            {:
+                System.out.println("condicion -> condicion AND condicion");
                 int i = TercetoManager.add("AND", c1, c2);
                 RESULT = TercetoManager.ref(i);
             :}
-            | COMPARACION:c1 OR COMPARACION:c2
+            | condicion:c1 OR condicion:c2
             {:
+                System.out.println("condicion -> condicion OR condicion");
                 int i = TercetoManager.add("OR", c1, c2);
                 RESULT = TercetoManager.ref(i);
             :}
             ;
 
-COMPARACION ::= EXPRESION:e1 COMPARADOR:op EXPRESION:e2
+comparacion ::= expresion:e1 comparador:op expresion:e2
             {:
+                System.out.println("comparacion -> expresion comparador expresion");
              int i = TercetoManager.add(op, e1, e2);
              RESULT = TercetoManager.ref(i);
             :}
             ;
 
-COMPARADOR ::= EQ {: RESULT = "=="; :}
-             | SIMBOLO_MENOR {: RESULT = "<"; :}
-             | SIMBOLO_MAYOR {: RESULT = ">"; :}
-             | SIMBOLO_MENOR_O_IGUAL {: RESULT = "<="; :}
-             | SIMBOLO_MAYOR_O_IGUAL {: RESULT = ">="; :}
+comparador ::= EQ {: System.out.println("comparador -> EQ"); RESULT = "=="; :}
+             | SIMBOLO_MENOR {: System.out.println("comparador -> SIMBOLO_MENOR"); RESULT = "<"; :}
+             | SIMBOLO_MAYOR {: System.out.println("comparador -> SIMBOLO_MAYOR"); RESULT = ">"; :}
+             | SIMBOLO_MENOR_O_IGUAL {: System.out.println("comparador -> SIMBOLO_MENOR_O_IGUAL"); RESULT = "<="; :}
+             | SIMBOLO_MAYOR_O_IGUAL {: System.out.println("comparador -> SIMBOLO_MAYOR_O_IGUAL"); RESULT = ">="; :}
+             | SIMBOLO_DISTINTO {: System.out.println("comparador -> SIMBOLO_DISTINTO"); RESULT = "!="; :}
              ;
+             
 
 /* Iteración */
-ITERACION ::= WHILE M:inicio PARENTESIS_IZQ GEN_BF:bf PARENTESIS_DER LLAVE_IZQ BLOQUE LLAVE_DER
+iteracion ::= WHILE m:inicio PARENTESIS_IZQ gen_bf:bf PARENTESIS_DER LLAVE_IZQ bloque LLAVE_DER
             {:
+             System.out.println("iteracion -> WHILE m PARENTESIS_IZQ gen_bf PARENTESIS_DER LLAVE_IZQ bloque LLAVE_DER");
              // salto al inicio para repetir
             TercetoManager.add("BI", "-", TercetoManager.ref(inicio));
 
@@ -347,20 +397,27 @@ ITERACION ::= WHILE M:inicio PARENTESIS_IZQ GEN_BF:bf PARENTESIS_DER LLAVE_IZQ B
             :}
             ;
 
-STEP_OPCIONAL ::= STEP CTE_INT:s
-                {: RESULT = s; :}
+step_opcional ::= STEP CTE_INT:s
+                {:
+                    System.out.println("step_opcional -> STEP CTE_INT");
+                    RESULT = s;
+                :}
                 | 
-                {: RESULT = 1; :}
+                {:
+                    System.out.println("step_opcional -> epsilon");
+                    RESULT = 1;
+                :}
                 ;
 
-FOR_BUCLE ::=
-    FOR ID:id IGUAL EXPRESION:desde
+for_bucle ::=
+    FOR ID:id ASIG expresion:desde
     {:
+        System.out.println("for_bucle -> FOR ID ASIG expresion TO expresion step_opcional bloque NEXT ID");
         // inicialización
         TercetoManager.add(":=", id, desde);
     :}
-    TO EXPRESION:hasta
-    M:inicioCond
+    TO expresion:hasta
+    m:inicioCond
     {:
         // condición
         int comp = TercetoManager.add("<=", id, hasta);
@@ -370,8 +427,8 @@ FOR_BUCLE ::=
         int bf = TercetoManager.add("BF", refComp, "??");
         TercetoManager.pushIndex(bf);
     :}
-    STEP_OPCIONAL:step
-    BLOQUE
+    step_opcional:step
+    bloque
     NEXT ID:id2
     {:
         // opcional validar NEXT id
@@ -393,18 +450,21 @@ FOR_BUCLE ::=
     :}
 ;
 
-SALIDA ::= WRITE PARENTESIS_IZQ CTE_STR:s PARENTESIS_DER
+salida ::= WRITE PARENTESIS_IZQ CTE_STR:s PARENTESIS_DER
 {:
+    System.out.println("salida -> WRITE PARENTESIS_IZQ CTE_STR PARENTESIS_DER");
     TercetoManager.add("WRITE", s, "-");
 :}
          | WRITE PARENTESIS_IZQ ID:id PARENTESIS_DER
 {:
+    System.out.println("salida -> WRITE PARENTESIS_IZQ ID PARENTESIS_DER");
     TercetoManager.add("WRITE", id, "-");
 :}
          ;
          
-ENTRADA ::= READ PARENTESIS_IZQ ID:id PARENTESIS_DER
+entrada ::= READ PARENTESIS_IZQ ID:id PARENTESIS_DER
 {:
+    System.out.println("entrada -> READ PARENTESIS_IZQ ID PARENTESIS_DER");
     TercetoManager.add("READ", id, "-");
 :}
           ;

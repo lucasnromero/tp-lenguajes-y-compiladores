@@ -203,6 +203,7 @@
             </goals>
             <configuration>
               <symbolInterface>true</symbolInterface>
+              <cupArgs>-expect 1</cupArgs>
             </configuration>
           </execution>
         </executions>
