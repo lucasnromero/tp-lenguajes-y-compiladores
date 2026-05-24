@@ -1,22 +1,23 @@
 # Pasos
 
 1. Identificar tokens y detallarlos en en parser.cup como terminales
-2. En lexer.flex detallar las expresiones regulares para cada token y las acciones léxicas luego de <YYINITIAL>  (si no aplica, directamente retornar el token)
+2. En lexer.flex detallar las expresiones regulares para cada token y las acciones léxicas luego de <YYINITIAL> (si no aplica, directamente retornar el token)
 
 ## Duda 1
 
 Identificando los tokens surgió un punto para preguntar en clase:
-- Comparadores del tipo ">=" 
+
+- Comparadores del tipo ">="
 
 Opción 1:
 Dos tokens por separado
-= --> IGUAL 
+= --> IGUAL
+
 > --> SIMBOLO_MAYOR
 
-Opción 2 (LA QUE ELEGIMOS): 
+Opción 2 (LA QUE ELEGIMOS):
 Un token único
-SIMBOLO_MAYOR_O_IGUAL --> >= 
-
+SIMBOLO_MAYOR_O_IGUAL --> >=
 
 Justificación: Se simplifica para escritura de las reglas y vemos que no se utiliza en ningún otro lado que no sea una comparación. Así que no habría complejidad
 
@@ -54,38 +55,35 @@ a := 3
 
 (ID,a) (ASIG,;=) (CTE_INT,3)
 
-
 ## Modificaciones parser.cup (22/04/26)
 
-- Cambié todos los no terminales a minusculas. Los no terminales quedan mejor en minusculas y los tokens en mayúsculas. 
+- Cambié todos los no terminales a minusculas. Los no terminales quedan mejor en minusculas y los tokens en mayúsculas.
 
-- Se unificó asignación: 
-asignacion ::= ID ASIG expresion
-             | ID ASIG CTE_STR
-             ;
+- Se unificó asignación:
+  asignacion ::= ID ASIG expresion
+  | ID ASIG CTE_STR
+  ;
 
 - Cambié las reglas de condiciones por estas, que son como están en la teoría para que quede más legible.
-Además agregué un NOT adelante de comparacion para que quede consistente y funcione tanto para el IF como para el WHILE.
-Antes no funcionaba el NOT con el while.
+  Además agregué un NOT adelante de comparacion para que quede consistente y funcione tanto para el IF como para el WHILE.
+  Antes no funcionaba el NOT con el while.
 
-seleccion ::=   IF PARENTESIS_IZQ condicion PARENTESIS_DER LLAVE_IZQ bloque LLAVE_DER ELSE LLAVE_IZQ bloque LLAVE_DER |
-                IF PARENTESIS_IZQ condicion PARENTESIS_DER LLAVE_IZQ bloque LLAVE_DER
+seleccion ::= IF PARENTESIS_IZQ condicion PARENTESIS_DER LLAVE_IZQ bloque LLAVE_DER ELSE LLAVE_IZQ bloque LLAVE_DER |
+IF PARENTESIS_IZQ condicion PARENTESIS_DER LLAVE_IZQ bloque LLAVE_DER
 
-condicion ::= comparacion 
-            | NOT comparacion
-            | condicion AND comparacion 
-            | condicion OR comparacion
+condicion ::= comparacion
+| NOT comparacion
+| condicion AND comparacion
+| condicion OR comparacion
 
 comparacion ::= expresion comparador expresion
 
 comparador ::= EQ
-             | SIMBOLO_MENOR
-             | SIMBOLO_MAYOR
-             | SIMBOLO_MENOR_O_IGUAL
-             | SIMBOLO_MAYOR_O_IGUAL
-             ;
-
-
+| SIMBOLO_MENOR
+| SIMBOLO_MAYOR
+| SIMBOLO_MENOR_O_IGUAL
+| SIMBOLO_MAYOR_O_IGUAL
+;
 
 ## Comparador distinto `!=`
 
@@ -93,16 +91,15 @@ comparador ::= EQ
 - En parser.cup: terminal `SIMBOLO_DISTINTO` y se lo agregó a `comparador` de esta forma:
 
 comparador ::= EQ
-             | SIMBOLO_DISTINTO
-             | SIMBOLO_MENOR
-             | SIMBOLO_MAYOR
-             | SIMBOLO_MENOR_O_IGUAL
-             | SIMBOLO_MAYOR_O_IGUAL
-             ;
-
-
+| SIMBOLO_DISTINTO
+| SIMBOLO_MENOR
+| SIMBOLO_MAYOR
+| SIMBOLO_MENOR_O_IGUAL
+| SIMBOLO_MAYOR_O_IGUAL
+;
 
 ##Test de error
+
 - Se agregan los siguientes test que prueban que errores en los temas especiales, en test.txt estan comentados, y se agregan en ParserTest.java como compilationError
 
 stepError: El step no puede ser distinto a int
@@ -112,3 +109,15 @@ toError: Falta de "to"
 asignacionError: Falta de ":="
 divisionByZeroError: No se puede dividir por cero, debe dar error
 variableNextError: El lexema de id que se asigna en for id := cte, debe ser el mismo lexema que se usa en next
+
+## CORRECCIONES DESPUES DE LA PRIMERA ENTREGA
+
+- El token {CTEFLOAT} ahora tiene una validacion de cotas
+- Los ID ahora se insertan en la tabla de simbolos con los tipo de datos que se ven en la imagen del ejemplo: Int, Float, String. A su vez,
+  los valores de estos ID se insertan en la tabla con los tipos de datos CTE_INTEGER, CTE_STRING, CTE_FLOAT como lo dicen en la correccion.
+- No se hizo ninguna correccion sobre los IFs anidados porque actualmente esta funcionando correctamente. Tambien el while.
+- Respecto a los comentarios, sobre la correccion "No debe permitir caracteres invalidos." Probe cambiar la regex a esto:
+  AsciiSymbols = [\u0020-\u007E]
+  Comment1 = "#+"({Letter}|{Digit}|{AsciiSymbols}|{WhiteSpace})\*"+#"
+  Pero tanto el test singleLineComment() de LexerTest.java, linea:29 y write() de ParserTest.java, Linea:52 fallaban y no encontre la causa.
+  Por lo tanto, es lo unico que `no se soluciono`

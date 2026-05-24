@@ -1,11 +1,23 @@
 package lyc.compiler;
 
 import java_cup.runtime.*;
+import lyc.compiler.symbolTable.*;
 
 parser code {:
   public void report_error(String message, Object info) {
     System.err.println("Syntax error: " + message);
   }
+
+    private void setTipoDato(java.util.List<String> listaIds, String tipo) {
+        for (String id : listaIds) {
+            SymbolTableEntry entry = SymbolTable.getSymbols().get(id);
+            if (entry == null) {
+                entry = new SymbolTableEntry(id);
+                SymbolTable.add(id, entry);
+            }
+            entry.setType(tipo);
+        }
+    }
 :};
 
 action code {:
@@ -114,16 +126,32 @@ declaraciones ::= declaraciones declaracion
                 | declaracion
                 ;
 
-declaracion ::= lista_variables DOS_PUNTOS tipo_dato
+declaracion ::= lista_variables:ids DOS_PUNTOS tipo_dato:tipo
+              {:
+                  setTipoDato((java.util.List<String>) ids, (String) tipo);
+              :}
               ;
 
-lista_variables ::= lista_variables COMA ID
-                  | ID
+lista_variables ::= lista_variables:ids COMA ID:id
+                  {: 
+                      java.util.List<String> lista = (java.util.List<String>) ids;
+                      lista.add((String) id);
+                      RESULT = lista;
+                  :}
+                  | ID:id
+              {:
+                      java.util.List<String> lista = new java.util.ArrayList<>();
+                      lista.add((String) id);
+                      RESULT = lista;
+              :}
                   ;
 
 tipo_dato ::= INT
+            {: RESULT = "Int"; :}
             | FLOAT
+            {: RESULT = "Float"; :}
             | STRING
+            {: RESULT = "String"; :}
             ;
 
 /* Bloque de sentencias */

@@ -157,53 +157,42 @@ for i := 1 to 10 step 2.5
 next i
 +#
 
+#+ IF anidados +#
 
+if (a > b AND c > b)
+{
+    if (a > b OR c > b)
+    {
+        if (NOT a > b)
+        {
+            if (a > b AND c > b)
+            {
+                write("a es mas grande que b y c es mas grande que b")
+            }
+        }
+    }
+}
 
+#+ WHILE anidados +#
 
-#+
-ERROR: STEP no puede ser negativo
-+#
+while (a > b)
+{
+    write("a es mas grande que b")
+    a := a + 1
+}
 
-#+
-for i := 1 to 10 step -1
-   write(i)
-next i
-+#
+while (NOT a > b)
+{
+    while (NOT a > b)
+    {
+        while (NOT a > b)
+        {
+            while (NOT a > b)
+            {
+                write("a es mas grande que b")
+                a := a + 1
+            }
+        }
+    }
+}
 
-#+
-ERROR: Operador DIV solo valido para enteros
-+#
-#+
-x := "hola" div 2
-+#
-
-#+
-ERROR: Operador MOD solo valido para enteros
-+#
-#+
-x := 10.5 mod 3
-+#
-
-#+
-ERROR: Falta palabra clave TO en FOR
-+#
-#+
-for i := 1 10
-   write(i)
-next i
-+#
-
-#+
-ERROR: Falta operador := en FOR
-+#
-#+
-for i 1 to 10
-   write(i)
-next i
-+#
-
-#+
-ERROR: Division por cero no permitida
-+#
-
-x := 10 DIV 0
