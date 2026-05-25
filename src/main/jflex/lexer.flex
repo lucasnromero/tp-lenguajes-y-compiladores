@@ -39,12 +39,24 @@ import lyc.compiler.symbolTable.*;
         throw new InvalidIntegerException("Integer out of range");
       }
       SymbolTableEntry entry = new SymbolTableEntry("_"+yytext());
-      entry.setType("Int");
+      entry.setType("CTE_INT");
       entry.setValue(Integer.parseInt(yytext()));
       SymbolTable.add("_"+yytext(), entry);
       return (int) value;
     } catch (NumberFormatException e) {
       throw new InvalidIntegerException("Invalid integer");
+    }
+  }
+
+  private float parseFloatInRange(String text) throws InvalidFloatException {
+    try {
+      float value = Float.parseFloat(text);
+      if (!Float.isFinite(value)) {
+        throw new InvalidFloatException("Float out of range");
+      }
+      return value;
+    } catch (NumberFormatException e) {
+      throw new InvalidFloatException("Invalid float");
     }
   }
 %}
@@ -147,11 +159,12 @@ Comment = "#+"([^+]|\+[^#])*"+#"
   {CTEINT}    { return symbol(sym.CTE_INT, parseIntInRange(yytext())); }
 
   {CTEFLOAT}  { 
+    float value = parseFloatInRange(yytext());
     SymbolTableEntry entry = new SymbolTableEntry("_"+yytext());
-    entry.setType("Float");
-    entry.setValue(Float.parseFloat(yytext()));
+    entry.setType("CTE_FLOAT");
+    entry.setValue(value);
     SymbolTable.add("_"+yytext(), entry);
-    return symbol(sym.CTE_FLOAT, Double.parseDouble(yytext())); }
+    return symbol(sym.CTE_FLOAT, Double.valueOf(value)); }
   
   {CTESTR}    { String text = yytext();
 
@@ -162,7 +175,7 @@ Comment = "#+"([^+]|\+[^#])*"+#"
         throw new InvalidLengthException("String constant too long");
     }
     SymbolTableEntry entry = new SymbolTableEntry("_"+content);
-    entry.setType("String");
+    entry.setType("CTE_STR");
     entry.setValue(content);
     entry.setLength(content.length());
     SymbolTable.add("_"+content, entry);
