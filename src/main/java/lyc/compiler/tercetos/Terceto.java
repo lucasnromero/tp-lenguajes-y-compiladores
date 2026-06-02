@@ -43,6 +43,10 @@ public class Terceto {
 
     @Override
     public String toString() {
+
+        if(type != null) {
+            return "(" + op + "," + arg1 + "," + arg2 + "," + type + ")";
+        }
         return "(" + op + "," + arg1 + "," + arg2 + ")";
     }
 }

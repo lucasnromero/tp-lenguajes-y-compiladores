@@ -311,11 +311,6 @@ asig_simple ::= ID:id ASIG expresion:e
                 checkDeclared(id);
                 SymbolTableEntry entry = SymbolTable.get(id);
                 
-                // Tipado estricto: verificar compatibilidad
-                if("String".equals(entry.getType())) {
-                    throw new RuntimeException("tipo de dato incorrecto: no se puede asignar una expresión numérica a una variable String");
-                }
-                
                 String targetType = entry.getType();
                 String sourceType = getArgType(e);
                 if (!isCompatible(targetType, sourceType)) {
@@ -361,6 +356,9 @@ termino ::= termino:t ASTERISCO factor:f
          | termino:t BARRA_DIAGONAL factor:f
             {:
                 System.out.println("termino -> termino BARRA_DIAGONAL factor");
+                if(Integer.parseInt(f) == 0) {
+                    throw new RuntimeException("Error de división: división por cero");
+                }
                 String type1 = getArgType(t);
                 String type2 = getArgType(f);
                 checkNumericCompatibility(type1, type2, "/");
@@ -369,6 +367,9 @@ termino ::= termino:t ASTERISCO factor:f
          | termino:t DIV factor:f
             {:
                 System.out.println("termino -> termino DIV factor");
+                if(Integer.parseInt(f) == 0) {
+                    throw new RuntimeException("Error de division: division por cero");
+                }
                 String type1 = getArgType(t);
                 String type2 = getArgType(f);
                 checkNumericCompatibility(type1, type2, "DIV");
@@ -410,23 +411,18 @@ factor ::= PARENTESIS_IZQ expresion:e PARENTESIS_DER
                 System.out.println("factor -> CTE_FLOAT");
                 RESULT = f.toString();
             :}
+         | CTE_STR:s
+            {:
+                System.out.println("factor -> CTE_STR");
+                RESULT = s;
+            :}
+         | SIMBOLO_MENOS CTE_INT:s
+            {:
+                System.out.println("factor -> SIMBOLO_MENOS CTE_INT");
+                RESULT = "-"+ s;
+            :}
          ;
 
-asig_string ::= ID:id ASIG CTE_STR:cte 
-            {:
-                System.out.println("asig_string -> ID ASIG CTE_STR");
-                checkDeclared(id);
-                SymbolTableEntry entry = SymbolTable.get(id);
-                
-                // Tipado estricto: solo permitir asignar String a String
-                if(!"String".equals(entry.getType())) {
-                    throw new RuntimeException("Incompatible types: cannot assign String to " + entry.getType() + ". Variable '" + id + "' is " + entry.getType() + " but expression is String");
-                }
-                
-                TercetoManager.add(":=", id, cte);
-            :}
-              ;
-/* Condicionales */
 
 cond_con_else ::=
     IF PARENTESIS_IZQ gen_bf:bf PARENTESIS_DER
@@ -547,6 +543,12 @@ step_opcional ::= STEP CTE_INT:s
                     System.out.println("step_opcional -> STEP CTE_INT");
                     RESULT = s;
                 :}
+                |
+                    STEP SIMBOLO_MENOS CTE_INT:s
+                {:
+                    System.out.println("step_opcional -> STEP CTE_INT");
+                    RESULT = -s;
+                :}
                 | 
                 {:
                     System.out.println("step_opcional -> epsilon");
@@ -590,9 +592,15 @@ for_bucle ::=
             throw new RuntimeException("NEXT ID no coincide con FOR ID: se esperaba '" + id + "' pero se encontró '" + id2 + "'");
         }
 
-        // incremento
-        int suma = TercetoManager.add("+", id, step.toString());
-        TercetoManager.add(":=", id, TercetoManager.ref(suma));
+        int operacion;
+        if(step < 0) {
+            // Si el step es negativo, restar en lugar de sumar
+            operacion = TercetoManager.add("-", id, String.valueOf(-step)); // en este caso ya va a ser un string
+        }else{
+            operacion = TercetoManager.add("+", id, String.valueOf(step)); // step es un entero, se convierte
+        }
+
+        TercetoManager.add(":=", id, TercetoManager.ref(operacion));
 
         // volver a condición
         TercetoManager.add("BI", TercetoManager.ref(inicioCond), "_");

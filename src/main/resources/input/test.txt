@@ -1,12 +1,17 @@
 init{
-    a,b,c,d,f,g,h,i : Float
+    a,c,d,f,h : Float
+    i,b : Int
+    p,g : String
 }
 
 if (a < b){
-    b := 5.0
+    g := "hola"
+    p := g
+    b := -5
+
 
 }
 
-for i:=0 to 10
+for i:=10 to 0 step -1
     a := a + 1.0
 next i
