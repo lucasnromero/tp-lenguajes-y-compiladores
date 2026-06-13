@@ -59,6 +59,15 @@ parser code {:
     return "Int".equals(type) || "Float".equals(type);
   }
 
+
+  private boolean isZeroConstant(String operand) {
+    if (operand == null) return false;
+    try {
+      return Double.parseDouble(operand) == 0.0;   // cubre enteros y floats ("0", "0.0")
+    } catch (NumberFormatException e) {
+      return false;                               
+  }
+
   // Verifica compatibilidad de tipos para asignación
   // Reglas:
   // - Int = Int: OK
@@ -356,7 +365,7 @@ termino ::= termino:t ASTERISCO factor:f
          | termino:t BARRA_DIAGONAL factor:f
             {:
                 System.out.println("termino -> termino BARRA_DIAGONAL factor");
-                if(Integer.parseInt(f) == 0) {
+                if(isZeroConstant(f)) {
                     throw new RuntimeException("Error de división: división por cero");
                 }
                 String type1 = getArgType(t);
@@ -367,7 +376,7 @@ termino ::= termino:t ASTERISCO factor:f
          | termino:t DIV factor:f
             {:
                 System.out.println("termino -> termino DIV factor");
-                if(Integer.parseInt(f) == 0) {
+                if(isZeroConstant(f)) {
                     throw new RuntimeException("Error de division: division por cero");
                 }
                 String type1 = getArgType(t);
@@ -378,6 +387,9 @@ termino ::= termino:t ASTERISCO factor:f
          | termino:t MOD factor:f
             {:
                 System.out.println("termino -> termino MOD factor");
+                if(isZeroConstant(f)) {
+                    throw new RuntimeException("Error de modulo: modulo por cero");
+                }
                 String type1 = getArgType(t);
                 String type2 = getArgType(f);
                 checkNumericCompatibility(type1, type2, "MOD");
