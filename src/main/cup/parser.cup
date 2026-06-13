@@ -65,7 +65,8 @@ parser code {:
     try {
       return Double.parseDouble(operand) == 0.0;   // cubre enteros y floats ("0", "0.0")
     } catch (NumberFormatException e) {
-      return false;                               
+      return false;                                
+    }
   }
 
   // Verifica compatibilidad de tipos para asignación
@@ -267,6 +268,10 @@ declaracion ::= lista_variables:vars DOS_PUNTOS tipo_dato:tipo
                 System.out.println("declaracion -> lista_variables DOS_PUNTOS tipo_dato");
                 for(String v : vars) {
                     SymbolTableEntry entry = SymbolTable.get(v);
+                    // Si la variable ya tiene tipo, es porque ya fue declarada antes.
+                    if (entry.getType() != null) {
+                        throw new RuntimeException("Variable ya declarada: " + v);
+                    }
                     entry.setType(tipo);
                 }
             :}
