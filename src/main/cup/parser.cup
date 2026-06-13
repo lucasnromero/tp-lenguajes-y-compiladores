@@ -404,6 +404,10 @@ factor ::= PARENTESIS_IZQ expresion:e PARENTESIS_DER
          | CTE_INT:c
             {:
                 System.out.println("factor -> CTE_INT");
+                // Constante positiva: el máximo es 32767 (32768 solo es válido como -32768).
+                if (c > 32767) {
+                    throw new RuntimeException("Constante entera fuera de rango: " + c + " (máximo positivo 32767)");
+                }
                 RESULT = c.toString();
             :}
          | CTE_FLOAT:f
@@ -541,6 +545,10 @@ iteracion ::= WHILE PARENTESIS_IZQ  m:inicio gen_bf:bf PARENTESIS_DER LLAVE_IZQ 
 step_opcional ::= STEP CTE_INT:s
                 {:
                     System.out.println("step_opcional -> STEP CTE_INT");
+                    // Step positivo: mismo límite que cualquier constante positiva.
+                    if (s > 32767) {
+                        throw new RuntimeException("Constante entera fuera de rango: " + s + " (máximo positivo 32767)");
+                    }
                     RESULT = s;
                 :}
                 |

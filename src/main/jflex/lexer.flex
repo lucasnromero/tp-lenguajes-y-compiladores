@@ -40,7 +40,17 @@ import lyc.compiler.symbolTable.*;
   private int parseIntInRange(String text) throws InvalidIntegerException {
     try {
       long value = Long.parseLong(text);
-      if (value < -32768 || value > 32767) {
+      // Dejo comentario para la explicacion de validacion de rango para ctes negativas
+      // Rango entero válido: [-32768, 32767]. Este método se llama desde dos reglas:
+      //   - {CTEINT}   -> recibe la magnitud positiva ("5", "32768"); aquí value >= 0,
+      //                   por lo que la cota inferior (< -32768) no aplica.
+      //   - -{Digit}+  -> recibe el negativo completo ("-5", "-32769"); aquí la cota
+      //                   inferior (< -32768) sí aplica y valida el mínimo.
+      // Se admite hasta 32768 en magnitud porque es la magnitud del mínimo válido
+      // (-32768). Un "32768" suelto no se puede distinguir aquí de la magnitud de
+      // -32768 (ambos llegan a {CTEINT} como "32768"), así que el 32768 POSITIVO lo
+      // rechaza el parser (factor / step), que es el que tiene el contexto del signo.
+      if (value < -32768 || value > 32768) {
         throw new InvalidIntegerException("Integer out of range");
       }
       SymbolTableEntry entry = new SymbolTableEntry("_"+yytext());
