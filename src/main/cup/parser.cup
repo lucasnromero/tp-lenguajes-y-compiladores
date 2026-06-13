@@ -580,18 +580,18 @@ for_bucle ::=
         TercetoManager.add(":=", id, desde);
     :}
     TO expresion:hasta
+    step_opcional:step
     m:inicioCond
     {:
-        // condición
+        // El step ya se conoce: se elige el comparador según su signo.
+        //   step >= 0 (ascendente):  seguir mientras id <= hasta ; salir con id >  hasta (BGT)
+        //   step <  0 (descendente): seguir mientras id >= hasta ; salir con id <  hasta (BLT)
+        String comparador = (step < 0) ? ">=" : "<=";
         int comp = TercetoManager.add("CMP", id, hasta);
-        String refComp = "<=:" + TercetoManager.ref(comp);
-
-        // BF para salir con operador inverso (BGT)
-        String opInv = invertirOperador("<=");
+        String opInv = invertirOperador(comparador);
         int bf = TercetoManager.add(opInv, TercetoManager.ref(comp), "_");
         TercetoManager.pushIndex(bf);
     :}
-    step_opcional:step
     bloque
     NEXT ID:id2
     {:
