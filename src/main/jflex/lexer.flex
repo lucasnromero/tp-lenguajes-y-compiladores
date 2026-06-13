@@ -16,12 +16,17 @@ import lyc.compiler.symbolTable.*;
 %line
 %column
 %throws CompilerException
-/*%state COMMENT*/
+%state COMMENT
 %eofval{
+  if (yystate() == COMMENT) {
+    throw new InvalidCommentException("Comentario sin cerrar: falta « +# »");
+  }
   return symbol(sym.EOF);
 %eofval}
 
 %{
+  private int commentDepth = 0;
+
   private Symbol symbol(int type) {
     System.out.print("(" + sym.terminalNames[type] + ",-)" + " ");
     return new Symbol(type, yyline, yycolumn);
@@ -79,7 +84,9 @@ QUOTE3 = ”
 
 CTESTR = ({QUOTE1}([^\"\r\n])*{QUOTE1})|({QUOTE2}([^”\r\n])*{QUOTE3})
 /*CTESTR = \"([^\"\r\n])*\"*/
-Comment = "#+"([^+]|\+[^#])*"+#"
+
+/* Caracteres válidos para validar dentro de comentarios: (letras, dígitos, espacios y los símbolos de nuestro lenguaje). */
+CommentChar = [a-zA-Z0-9 \t\r\n!\"#+\-*/<>=:(),.{}“”]
 
 
 
@@ -93,8 +100,8 @@ Comment = "#+"([^+]|\+[^#])*"+#"
 
   /* Keywords */
   /* whitespace */
-  
-  {Comment} { /* ignore */ }
+
+  "#+" { commentDepth++; yybegin(COMMENT); }
 
   /* Constants */
   
@@ -191,7 +198,23 @@ Comment = "#+"([^+]|\+[^#])*"+#"
   {WhiteSpace} {
     if (yytext().contains("\n")) System.out.println();
   }
- 
+
+}
+
+<COMMENT> {
+  /* La consigna dice "Deberán estar delimitados por #+ y +# y podrán estar anidados en un solo nivel.", acá lo implementamos */
+
+  "#+"          { commentDepth++;
+                  if (commentDepth > 2) {
+                    throw new InvalidCommentException("Anidamiento de comentarios supera un solo nivel");
+                  }
+                }
+                
+  "+#"          { commentDepth--;
+                  if (commentDepth == 0) { yybegin(YYINITIAL); }
+                }
+  {CommentChar} { /* carácter válido, se descarta */ }
+  [^]           { throw new InvalidCommentException("Carácter inválido en comentario « " + yytext() + " »"); }
 }
 
 /* error fallback */
