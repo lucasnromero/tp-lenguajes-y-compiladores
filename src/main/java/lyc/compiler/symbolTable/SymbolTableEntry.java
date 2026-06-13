@@ -11,7 +11,9 @@ public class SymbolTableEntry {
     }
 
     public String getName() { return name; }
-    public String getType() { return type; }
+    public String getType() {
+    return type;
+}
     public void setType(String type) { this.type = type; }
 
     public Object getValue() { return value; }

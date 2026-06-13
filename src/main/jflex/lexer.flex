@@ -16,12 +16,17 @@ import lyc.compiler.symbolTable.*;
 %line
 %column
 %throws CompilerException
-/*%state COMMENT*/
+%state COMMENT
 %eofval{
+  if (yystate() == COMMENT) {
+    throw new InvalidCommentException("Comentario sin cerrar: falta « +# »");
+  }
   return symbol(sym.EOF);
 %eofval}
 
 %{
+  private int commentDepth = 0;
+
   private Symbol symbol(int type) {
     System.out.print("(" + sym.terminalNames[type] + ",-)" + " ");
     return new Symbol(type, yyline, yycolumn);
@@ -35,16 +40,38 @@ import lyc.compiler.symbolTable.*;
   private int parseIntInRange(String text) throws InvalidIntegerException {
     try {
       long value = Long.parseLong(text);
-      if (value < -32768 || value > 32767) {
+      // Dejo comentario para la explicacion de validacion de rango para ctes negativas
+      // Rango entero válido: [-32768, 32767]. Este método se llama desde dos reglas:
+      //   - {CTEINT}   -> recibe la magnitud positiva ("5", "32768"); aquí value >= 0,
+      //                   por lo que la cota inferior (< -32768) no aplica.
+      //   - -{Digit}+  -> recibe el negativo completo ("-5", "-32769"); aquí la cota
+      //                   inferior (< -32768) sí aplica y valida el mínimo.
+      // Se admite hasta 32768 en magnitud porque es la magnitud del mínimo válido
+      // (-32768). Un "32768" suelto no se puede distinguir aquí de la magnitud de
+      // -32768 (ambos llegan a {CTEINT} como "32768"), así que el 32768 POSITIVO lo
+      // rechaza el parser (factor / step), que es el que tiene el contexto del signo.
+      if (value < -32768 || value > 32768) {
         throw new InvalidIntegerException("Integer out of range");
       }
       SymbolTableEntry entry = new SymbolTableEntry("_"+yytext());
-      entry.setType("Int");
+      entry.setType("CTE_INT");
       entry.setValue(Integer.parseInt(yytext()));
       SymbolTable.add("_"+yytext(), entry);
       return (int) value;
     } catch (NumberFormatException e) {
       throw new InvalidIntegerException("Invalid integer");
+    }
+  }
+
+  private float parseFloatInRange(String text) throws InvalidFloatException {
+    try {
+      float value = Float.parseFloat(text);
+      if (!Float.isFinite(value)) {
+        throw new InvalidFloatException("Float out of range");
+      }
+      return value;
+    } catch (NumberFormatException e) {
+      throw new InvalidFloatException("Invalid float");
     }
   }
 %}
@@ -67,7 +94,9 @@ QUOTE3 = ”
 
 CTESTR = ({QUOTE1}([^\"\r\n])*{QUOTE1})|({QUOTE2}([^”\r\n])*{QUOTE3})
 /*CTESTR = \"([^\"\r\n])*\"*/
-Comment = "#+"([^+]|\+[^#])*"+#"
+
+/* Caracteres válidos dentro de comentarios: letras, dígitos, espacios, los símbolos del lenguaje y tildes. */
+CommentChar = [a-zA-Z0-9 \t\r\n!\"#+\-*/<>=:(),.{}“”áéíóúüñÁÉÍÓÚÜÑ¿¡]
 
 
 
@@ -81,8 +110,8 @@ Comment = "#+"([^+]|\+[^#])*"+#"
 
   /* Keywords */
   /* whitespace */
-  
-  {Comment} { /* ignore */ }
+
+  "#+" { commentDepth++; yybegin(COMMENT); }
 
   /* Constants */
   
@@ -119,8 +148,8 @@ Comment = "#+"([^+]|\+[^#])*"+#"
     return symbol(sym.SIMBOLO_MENOS);
   } 
   
-  "=="        { return symbol(sym.EQ); }
   "!="        { return symbol(sym.SIMBOLO_DISTINTO); }
+  "=="        { return symbol(sym.EQ); }
   "<="        { return symbol(sym.SIMBOLO_MENOR_O_IGUAL); }
   ">="        { return symbol(sym.SIMBOLO_MAYOR_O_IGUAL); }
 
@@ -147,11 +176,12 @@ Comment = "#+"([^+]|\+[^#])*"+#"
   {CTEINT}    { return symbol(sym.CTE_INT, parseIntInRange(yytext())); }
 
   {CTEFLOAT}  { 
+    float value = parseFloatInRange(yytext());
     SymbolTableEntry entry = new SymbolTableEntry("_"+yytext());
-    entry.setType("Float");
-    entry.setValue(Float.parseFloat(yytext()));
+    entry.setType("CTE_FLOAT");
+    entry.setValue(value);
     SymbolTable.add("_"+yytext(), entry);
-    return symbol(sym.CTE_FLOAT, yytext()); }
+    return symbol(sym.CTE_FLOAT, Double.valueOf(value)); }
   
   {CTESTR}    { String text = yytext();
 
@@ -162,7 +192,7 @@ Comment = "#+"([^+]|\+[^#])*"+#"
         throw new InvalidLengthException("String constant too long");
     }
     SymbolTableEntry entry = new SymbolTableEntry("_"+content);
-    entry.setType("String");
+    entry.setType("CTE_STR");
     entry.setValue(content);
     entry.setLength(content.length());
     SymbolTable.add("_"+content, entry);
@@ -178,7 +208,23 @@ Comment = "#+"([^+]|\+[^#])*"+#"
   {WhiteSpace} {
     if (yytext().contains("\n")) System.out.println();
   }
- 
+
+}
+
+<COMMENT> {
+  /* La consigna dice "Deberán estar delimitados por #+ y +# y podrán estar anidados en un solo nivel.", acá lo implementamos */
+
+  "#+"          { commentDepth++;
+                  if (commentDepth > 2) {
+                    throw new InvalidCommentException("Anidamiento de comentarios supera un solo nivel");
+                  }
+                }
+                
+  "+#"          { commentDepth--;
+                  if (commentDepth == 0) { yybegin(YYINITIAL); }
+                }
+  {CommentChar} { /* carácter válido, se descarta */ }
+  [^]           { throw new InvalidCommentException("Carácter inválido en comentario « " + yytext() + " »"); }
 }
 
 /* error fallback */

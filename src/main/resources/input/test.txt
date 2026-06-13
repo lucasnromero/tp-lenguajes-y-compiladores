@@ -1,209 +1,88 @@
-#+ TEMAS COMUNES +#
-
-
-#+ caso bloque de incicializacion, donde se declaran los tipos de datos de las variables +#
-
 init {
-    a1, b1 : Float
-    variable1 : Int
-    p1, p2, p3 : String
+    a, b, c : Int
+    x, y : Float
+    msg, name : String
 }
 
-#+ operaciones aritmeticas +#
+#+ ----- Asignaciones simples: Int, Float, String, constante negativa ----- +#
+a := 10
+b := -5
+x := 3.5
+msg := "hola mundo"
+name := msg
 
-x := 27 - c
-x := r + 500
-x := 34 * 3
-x := z / f
+#+ ----- Aritmetica: suma, resta, producto, division, div, mod ----- +#
+c := a + b * 2
+c := a - b
+c := a * 3
+c := a / b
+c := a div 2
+c := a mod 3
 
-#+ distinto tipos de asignaciones (flotante, entera y string) +#
-a := 99999.99
-a := 99.
-a := .9999
-a := 2
+#+ ----- Promocion valida: Float := Int ----- +#
+x := a
 
-b := "@sdADaSjfla%dfg"
-b := "asldk  fh sjf"
-
-#+ IF con else +#
-
-if (a > b)
-{
-    write("a es mas grande que b")
-}
-else
-{
-    write("a es mas chico o igual a b")
-}
-#+ IF con NOT +#
-a := 1
-b := 1
-c := 2
-
-if (NOT a > b)
-{
-    write("a no es mas grande que b")
+#+ ----- Seleccion: IF simple ----- +#
+if (a > b) {
+    c := a
 }
 
-
-#+ IF con OR +#
-
-
-a := 1
-b := 1
-c := 2
-
-if (a > b OR c > b)
-{
-    write("a es mas grande que b o c es mas grande que b")
+#+ ----- Seleccion: IF - ELSE ----- +#
+if (a == b) {
+    c := 1
+} else {
+    c := 0
 }
 
-#+ IF con AND +#
-
-if (a > b AND c > b)
-{
-    write("a es mas grande que b y c es mas grande que b")
+#+ ----- IF anidado: seleccion dentro de seleccion ----- +#
+if (a > 0) {
+    if (b < 0) {
+        c := a - b
+    }
 }
 
-#+ Sentencia read, donde "a" es una variable +#
+#+ ----- Condicion compuesta con AND ----- +#
+if (a > 0 AND b < 0) {
+    c := a
+}
 
+#+ ----- Ciclo WHILE ----- +#
+while (a > 0) {
+    a := a - 1
+}
+
+#+ ----- Ciclo FOR ascendente (tema especial) ----- +#
+for c := 0 to 5 step 1
+    a := a + c
+next c
+
+#+ ----- Ciclo FOR descendente, step negativo (tema especial) ----- +#
+for c := 10 to 0 step -1
+    a := a + 1
+next c
+
+#+ ----- Entrada y salida ----- +#
 read(a)
+write("resultado:")
+write(a)
 
+#+ ----- Comentario anidado en un solo nivel (valido):
+   este comentario externo #+ contiene uno interno +# y luego continua +#
 
-#+ iteracion con WHILE +#
+#+ ===================================================================
+   CASOS DE ERROR EN TIEMPO DE COMPILACION (comentados)
+   =================================================================== +#
 
-
-a := 1
-b := 3
-
-while (a > b)
-{
-    write("a es mas grande que b")
-    a := a + 1
-}
-
-while (NOT a > b)
-{
-    write("a es mas grande que b")
-    a := a + 1
-}
-
-#+ Sentencia write, donde """hola""" es una constante de tipo string, y "c" es una variable +#
-
-
-write("hola")  
-write(c)  
-
-
-
-
-
-#+ TEMAS ESPECIALES +#
-
-
-#+ Operacion MOD y DIV +#
-
-x := (10 div 3) + (10 mod 3) 
-
-if(x mod 2 == 0)
-{
-  write("Par")
-}
-
-#+ IF con distinto +#
-
-if(x != 0)
-{
-  write("No es cero")
-}
-
-#+ bucle FOR con STEP +#
-
-
-
-for i := 1 to 10 step 2
-   write(i)
-next i
-
-
-#+ bucle FOR sin STEP (se asume 1 el salto)+#
-
-for i := 1 to 5
-   write(i)
-next i 
-
-
-
-
-#+ Este deberia dar error pero no da
-ERROR: La variable del NEXT no coincide con la del FOR
-+#
-
-
-for i := 1 to 5
-   write(i)
-next j
-
-
-
-
-#+
-ERROR: STEP debe ser una constante entera
-+#
-
-#+
-for i := 1 to 10 step 2.5
-   write(i)
-next i
-+#
-
-
-
-
-#+
-ERROR: STEP no puede ser negativo
-+#
-
-#+
-for i := 1 to 10 step -1
-   write(i)
-next i
-+#
-
-#+
-ERROR: Operador DIV solo valido para enteros
-+#
-#+
-x := "hola" div 2
-+#
-
-#+
-ERROR: Operador MOD solo valido para enteros
-+#
-#+
-x := 10.5 mod 3
-+#
-
-#+
-ERROR: Falta palabra clave TO en FOR
-+#
-#+
-for i := 1 10
-   write(i)
-next i
-+#
-
-#+
-ERROR: Falta operador := en FOR
-+#
-#+
-for i 1 to 10
-   write(i)
-next i
-+#
-
-#+
-ERROR: Division por cero no permitida
-+#
-
-x := 10 DIV 0
+#+ ERROR cota entera: el maximo positivo es 32767. Codigo:  a := 40000  +#
+#+ ERROR cota entera: el minimo es -32768. Codigo:  a := -40000  +#
+#+ ERROR division por cero con constante literal. Codigo:  c := a / 0  +#
+#+ ERROR modulo por cero con constante literal. Codigo:  c := a mod 0  +#
+#+ ERROR tipos incompatibles Int := Float, no se permite democion. Codigo:  a := 3.5  +#
+#+ ERROR tipos incompatibles String := Int. Codigo:  msg := 5  +#
+#+ ERROR operacion aritmetica sobre String. Codigo:  c := a + msg  +#
+#+ ERROR variable ya declarada (redeclaracion). Codigo: en el init poner  a : Int  y luego  a : Float  +#
+#+ ERROR variable no declarada. Codigo:  z := 1  con z fuera del init  +#
+#+ ERROR identificador de mas de 50 caracteres. Codigo:  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa := 1  +#
+#+ ERROR NEXT id distinto al FOR id. Codigo:  for c := 0 to 5 ... next a  +#
+#+ ERROR anidamiento de comentarios de mas de un nivel. Codigo: tres aperturas seguidas de comentario  +#
+#+ ERROR caracter invalido dentro de comentario. Codigo: un comentario que contenga la letra ene con tilde  +#

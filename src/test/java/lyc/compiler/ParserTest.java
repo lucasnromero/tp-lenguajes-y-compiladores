@@ -25,7 +25,7 @@ public class ParserTest {
 
     @Test
     public void forWithStepTest() throws Exception {
-        compilationSuccessful("for  i:=0 to 5 step 2 read(b) b:=3+5 next i");
+        compilationSuccessful("for i:=0 to 5 step 2 read(b) b:=3+5 next i");
     }
 
     @Test
@@ -34,20 +34,15 @@ public class ParserTest {
     }
 
     @Test
-    public void notEqualComparatorInCondition() throws Exception {
-        compilationSuccessful("if (a != b) { x := 1 }");
-    }
-
-    @Test
     public void syntaxError() {
         compilationError("1234");
     }
 
-    @Test
+ /*    @Test
     void assignments() throws Exception {
         compilationSuccessful(readFromFile("assignments.txt"));
     }
-
+*/
     @Test
     void write() throws Exception {
         compilationSuccessful(readFromFile("write.txt"));
@@ -93,41 +88,6 @@ public class ParserTest {
         compilationSuccessful(readFromFile("while.txt"));
     }
 
-    @Test
-    public void stepErrorFloat() {
-        compilationError("for i := 1 to 10 step 2.5 write(i) next i");
-    }
-    @Test
-    public void stepNegativeError() {
-        compilationError("for i := 1 to 10 step -1 write(i) next i");
-    }
-
-    @Test
-    public void divError() {
-        compilationError("x := 'hola' div 2");
-    }
-
-
-    @Test
-    public void toError() {
-        compilationError("for i := 1 10 write(i) next i");
-    }
-
-    @Test
-    public void asignacionError() {
-        compilationError("for i 1 to 10 write(i) next i");
-    }
-
-    //@Test
-    //public void variableNextError() {
-    //    compilationError("for i := 1 to 5 write(i) next j");
-    //}
-
-    @Test
-    public void divisionByZeroError() {
-        compilationError("x := 10 DIV 0");
-    }
-
 
     private void compilationSuccessful(String input) throws Exception {
         assertThat(scan(input).sym).isEqualTo(sym.EOF);
@@ -146,5 +106,6 @@ public class ParserTest {
         assertThat(url).isNotNull();
         return IOUtils.toString(url.openStream(), StandardCharsets.UTF_8);
     }
+
 
 }

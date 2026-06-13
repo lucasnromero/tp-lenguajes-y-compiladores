@@ -1,10 +1,128 @@
 package lyc.compiler;
 
 import java_cup.runtime.*;
+import java.util.ArrayList;
+import java.util.List;
+import lyc.compiler.symbolTable.*;
+import lyc.compiler.tercetos.*;
 
 parser code {:
   public void report_error(String message, Object info) {
     System.err.println("Syntax error: " + message);
+  }
+
+  // Obtiene el tipo de un argumento (ID, constante o referencia a terceto)
+  private String getArgType(String arg) {
+    if (arg == null || arg.equals("-")) return null;
+    if (arg.startsWith("[")) {
+      // Referencia a terceto
+      int index = Integer.parseInt(arg.substring(1, arg.length() - 1));
+      return TercetoManager.get(index).getType();
+    }
+    // Verificar si es constante
+    try {
+      Integer.parseInt(arg);
+      return "Int";
+    } catch (NumberFormatException e1) {
+      try {
+        Double.parseDouble(arg);
+        return "Float";
+      } catch (NumberFormatException e2) {
+        // Es ID
+        SymbolTableEntry entry = SymbolTable.get(arg);
+        return (entry != null) ? entry.getType() : null;
+      }
+    }
+  }
+
+  // Verifica que una variable esté declarada (solo si hay bloque INIT)
+  private void checkDeclared(String id) {
+    // Solo validar si hay un bloque INIT con declaraciones
+    if (TercetoManager.getHasDeclaredVariables()) {
+      SymbolTableEntry entry = SymbolTable.get(id);
+      if (entry == null || entry.getType() == null) {
+        throw new RuntimeException("Variable no declarada: " + id);
+      }
+    }
+    // Si no hay bloque INIT, permitir uso implícito de variables (lenguaje más flexible)
+  }
+
+  // Verifica compatibilidad de tipos para operaciones aritméticas
+  private void checkNumericCompatibility(String type1, String type2, String operation) {
+    if ((type1 != null && !isNumeric(type1)) || (type2 != null && !isNumeric(type2))) {
+      throw new RuntimeException("Operación " + operation + " requiere tipos numéricos: " + type1 + " y " + type2);
+    }
+  }
+
+  // Verifica si un tipo es numérico
+  private boolean isNumeric(String type) {
+    return "Int".equals(type) || "Float".equals(type);
+  }
+
+
+  private boolean isZeroConstant(String operand) {
+    if (operand == null) return false;
+    try {
+      return Double.parseDouble(operand) == 0.0;   // cubre enteros y floats ("0", "0.0")
+    } catch (NumberFormatException e) {
+      return false;                                
+    }
+  }
+
+  // Verifica compatibilidad de tipos para asignación
+  // Reglas:
+  // - Int = Int: OK
+  // - Float = Float: OK  
+  // - Float = Int: OK (promoción)
+  // - Int = Float: ERROR (no permitir democión)
+  // - String = String: OK
+  // - Otros: ERROR
+  private boolean isCompatible(String targetType, String sourceType) {
+    if (targetType == null || sourceType == null) return true; // Permitir si alguno es desconocido
+    
+    if ("Int".equals(targetType)) {
+      return "Int".equals(sourceType); // Solo Int = Int
+    } else if ("Float".equals(targetType)) {
+      return "Float".equals(sourceType) || "Int".equals(sourceType); // Float = Float o Float = Int
+    } else if ("String".equals(targetType)) {
+      return "String".equals(sourceType); // Solo String = String
+    }
+    return false;
+  }
+
+  // Invierte un operador de comparación para generar el salto opuesto
+  private String invertirOperador(String op) {
+    switch(op) {
+      case "<": return "BGE";    // No menor -> mayor o igual
+      case ">": return "BLE";    // No mayor -> menor o igual
+      case "<=": return "BGT";   // No menor o igual -> mayor
+      case ">=": return "BLT";   // No mayor o igual -> menor
+      case "==": return "BNE";   // No igual -> distinto
+      case "!=": return "BEQ";   // No distinto -> igual
+      default: return "BF";      // Fallback
+    }
+  }
+
+  // Extrae el operador de una condición simple (formato "op:[ref]")
+  private String extraerOperador(String condicion) {
+    if (condicion != null && condicion.contains(":")) {
+      int colonIdx = condicion.indexOf(':');
+      if (colonIdx > 0) {
+        return condicion.substring(0, colonIdx);
+      }
+    }
+    return null;
+  }
+
+  // Extrae la referencia de una condición simple (formato "op:[ref]")
+  private String extraerReferencia(String condicion) {
+    if (condicion != null && condicion.contains(":")) {
+      int colonIdx = condicion.indexOf(':');
+      if (colonIdx >= 0 && colonIdx < condicion.length() - 1) {
+        return condicion.substring(colonIdx + 1);
+      }
+    }
+    return condicion;
   }
 :};
 
@@ -12,10 +130,10 @@ action code {:
 :};
 
 /* Terminals */
-terminal ID;
-terminal CTE_INT;
-terminal CTE_FLOAT;
-terminal CTE_STR;
+terminal String ID;
+terminal Integer CTE_INT;
+terminal Double CTE_FLOAT;
+terminal String CTE_STR;
 
 terminal IF;
 terminal ELSE;
@@ -32,7 +150,6 @@ terminal LLAVE_IZQ;
 terminal LLAVE_DER;
 
 terminal EQ;
-terminal SIMBOLO_DISTINTO;
 terminal NOT;
 terminal ASIG;
 terminal DOS_PUNTOS;
@@ -40,6 +157,7 @@ terminal SIMBOLO_MENOR;
 terminal SIMBOLO_MAYOR;
 terminal SIMBOLO_MENOR_O_IGUAL;
 terminal SIMBOLO_MAYOR_O_IGUAL;
+terminal SIMBOLO_DISTINTO;
 
 terminal INT;
 terminal STRING;
@@ -69,15 +187,17 @@ non terminal Object bloque_init;
 non terminal Object bloque;
 non terminal Object sentencia;
 
-non terminal Object asignacion;
-non terminal Object expresion;
-non terminal Object termino;
-non terminal Object factor;
+non terminal String asig_simple;
+non terminal String asig_string;
+non terminal String expresion;
+non terminal String termino;
+non terminal String factor;
 
-non terminal Object seleccion;
-non terminal Object condicion;
-non terminal Object comparacion;
-non terminal Object comparador;
+non terminal Object cond_sin_else;
+non terminal Object cond_con_else;
+non terminal String condicion;
+non terminal String comparacion;
+non terminal String comparador;
 
 non terminal Object iteracion;
 
@@ -86,12 +206,19 @@ non terminal Object entrada;
 
 non terminal Object declaraciones;
 non terminal Object declaracion;
-non terminal Object lista_variables;
-non terminal Object tipo_dato;
+non terminal List<String> lista_variables;
+non terminal String tipo_dato;
 non terminal Object for_bucle;
+/* reglas auxiliares */
+non terminal Integer gen_bf;
+non terminal Integer gen_bi;
+non terminal Integer m;
+non terminal Integer step_opcional;
 
 /* Temas especiales */
-
+precedence left OR;
+precedence left AND;
+precedence right NOT;
 
 
 /* Start */
@@ -102,165 +229,431 @@ start with programa;
 /* Grammar */
 
 programa ::= bloque_init bloque
+            {:
+                System.out.println("programa -> bloque_init bloque");
+            :}
             | bloque_init
+            {:
+                System.out.println("programa -> bloque_init");
+            :}
             | bloque
+            {:
+                System.out.println("programa -> bloque");
+            :}
             | 
+            {:
+                System.out.println("programa -> epsilon");
+            :}
            ;
 
 bloque_init ::= INIT LLAVE_IZQ declaraciones LLAVE_DER
+              {:
+                  System.out.println("bloque_init -> INIT LLAVE_IZQ declaraciones LLAVE_DER");
+                  TercetoManager.setHasDeclaredVariables(true);
+              :}
               ;
 
 declaraciones ::= declaraciones declaracion
+                {:
+                    System.out.println("declaraciones -> declaraciones declaracion");
+                :}
                 | declaracion
+                {:
+                    System.out.println("declaraciones -> declaracion");
+                :}
                 ;
 
-declaracion ::= lista_variables DOS_PUNTOS tipo_dato
-              ;
+declaracion ::= lista_variables:vars DOS_PUNTOS tipo_dato:tipo
+            {:
+                System.out.println("declaracion -> lista_variables DOS_PUNTOS tipo_dato");
+                for(String v : vars) {
+                    SymbolTableEntry entry = SymbolTable.get(v);
+                    // Si la variable ya tiene tipo, es porque ya fue declarada antes.
+                    if (entry.getType() != null) {
+                        throw new RuntimeException("Variable ya declarada: " + v);
+                    }
+                    entry.setType(tipo);
+                }
+            :}
+            ;
 
-lista_variables ::= lista_variables COMA ID
-                  | ID
-                  ;
+lista_variables ::= lista_variables:l COMA ID:id
+            {:
+                System.out.println("lista_variables -> lista_variables COMA ID");
+                l.add( id);
+                RESULT = l;
+            :}
+          | ID:id
+            {:
+                System.out.println("lista_variables -> ID");
+                java.util.List<String> lista = new java.util.ArrayList<>();
+                lista.add(id);
+                RESULT = lista;
+            :}
+          ;
 
-tipo_dato ::= INT
-            | FLOAT
-            | STRING
+tipo_dato ::= INT    {: System.out.println("tipo_dato -> INT"); RESULT = "Int"; :}
+            | FLOAT  {: System.out.println("tipo_dato -> FLOAT"); RESULT = "Float"; :}
+            | STRING {: System.out.println("tipo_dato -> STRING"); RESULT = "String"; :}
             ;
 
 /* Bloque de sentencias */
 bloque ::= bloque sentencia
+         {:
+             System.out.println("bloque -> bloque sentencia");
+         :}
          | sentencia
+         {:
+             System.out.println("bloque -> sentencia");
+         :}
          ;
 
-sentencia ::= seleccion
-{:
-    System.out.println();
-    System.out.println("REDUCE: sentencia -> seleccion");
-:}
+sentencia ::= cond_sin_else
+            | cond_con_else
             | iteracion
-{:
-    System.out.println();
-    System.out.println("REDUCE: sentencia -> iteracion");
-:}
-            | asignacion
-{:
-    System.out.println();
-    System.out.println("REDUCE: sentencia -> asignacion");
-:}
+            | asig_simple
+            | asig_string
             | salida
-{:
-    System.out.println();
-    System.out.println("REDUCE: sentencia -> salida");
-:}
             | entrada
-{:
-    System.out.println();
-    System.out.println("REDUCE: sentencia -> entrada");
-:}
             | for_bucle
-{:
-    System.out.println();
-    System.out.println("REDUCE: sentencia -> for_bucle");
-:}
             ;
 
 /* Asignación */
-asignacion ::= ID ASIG expresion
-{:
-    System.out.println();
-    System.out.println("REDUCE: asignacion -> ID := expresion");
-:}
-             | ID ASIG CTE_STR
-{:
-    System.out.println();
-    System.out.println("REDUCE: asignacion -> ID := CTE_STR");
-:}
-             ;
+asig_simple ::= ID:id ASIG expresion:e
+            {:
+                System.out.println("asig_simple -> ID ASIG expresion");
+                checkDeclared(id);
+                SymbolTableEntry entry = SymbolTable.get(id);
+                
+                String targetType = entry.getType();
+                String sourceType = getArgType(e);
+                if (!isCompatible(targetType, sourceType)) {
+                    throw new RuntimeException("Incompatible types: cannot assign " + sourceType + " to " + targetType + ". Variable '" + id + "' is " + targetType + " but expression is " + sourceType);
+                }
+                
+                TercetoManager.add(":=", id, e);
+            :}
+            ;
 
 /* Expresiones */
-expresion ::= expresion SIMBOLO_MAS termino
-            | expresion SIMBOLO_MENOS termino
-            | termino
-            ;
-
-termino ::= termino ASTERISCO factor
-          | termino BARRA_DIAGONAL factor
-          | termino DIV factor
-          | termino MOD factor
-          | factor
-          ;
-
-factor ::= PARENTESIS_IZQ expresion PARENTESIS_DER
-         | ID
-         | CTE_INT
-         | CTE_FLOAT
-         ;
-
-/* Condicionales */
-seleccion ::= IF PARENTESIS_IZQ condicion PARENTESIS_DER LLAVE_IZQ bloque LLAVE_DER ELSE LLAVE_IZQ bloque LLAVE_DER
-{:
-    System.out.println();
-    System.out.println("REDUCE: seleccion -> IF (condicion) {bloque} ELSE {bloque}");
-:}
-            | IF PARENTESIS_IZQ condicion PARENTESIS_DER LLAVE_IZQ bloque LLAVE_DER
-{:
-    System.out.println();
-    System.out.println("REDUCE: seleccion -> IF (condicion) {bloque}");
-:}
-            ;
-
-/* Condiciones */
-condicion ::= comparacion
-            | NOT comparacion
-            | condicion AND comparacion
-            | condicion OR comparacion
-            ;
-
-comparacion ::= expresion comparador expresion
-              ;
-
-comparador ::= EQ
-             | SIMBOLO_DISTINTO
-             | SIMBOLO_MENOR
-             | SIMBOLO_MAYOR
-             | SIMBOLO_MENOR_O_IGUAL
-             | SIMBOLO_MAYOR_O_IGUAL
-             ;
-
-/* Iteración */
-iteracion ::= WHILE PARENTESIS_IZQ condicion PARENTESIS_DER LLAVE_IZQ bloque LLAVE_DER
-{:
-    System.out.println();
-    System.out.println("REDUCE: iteracion -> WHILE (condicion) {bloque}");
-:}
-            ;
-
-for_bucle ::= FOR ID ASIG expresion TO expresion bloque NEXT ID
-{:
-    System.out.println();
-    System.out.println("REDUCE: for_bucle -> FOR ID := expresion TO expresion bloque NEXT ID");
-:}
-           | FOR ID ASIG expresion TO expresion STEP CTE_INT bloque NEXT ID
-{:
-    System.out.println();
-    System.out.println("REDUCE: for_bucle -> FOR ID := expresion TO expresion STEP CTE_INT bloque NEXT ID");
-:}
+expresion ::= expresion:e SIMBOLO_MAS termino:t
+            {:
+                System.out.println("expresion -> expresion SIMBOLO_MAS termino");
+                String type1 = getArgType(e);
+                String type2 = getArgType(t);
+                checkNumericCompatibility(type1, type2, "+");
+                RESULT = TercetoManager.addFolded("+", e, t);
+            :}
+           | expresion:e SIMBOLO_MENOS termino:t
+            {:
+                System.out.println("expresion -> expresion SIMBOLO_MENOS termino");
+                String type1 = getArgType(e);
+                String type2 = getArgType(t);
+                checkNumericCompatibility(type1, type2, "-");
+                RESULT = TercetoManager.addFolded("-", e, t);
+            :}
+           | termino:t
+            {:
+                System.out.println("expresion -> termino");
+                RESULT = t;
+            :}
            ;
 
-salida ::= WRITE PARENTESIS_IZQ CTE_STR PARENTESIS_DER
-{:
-    System.out.println();
-    System.out.println("REDUCE: salida -> WRITE (CTE_STR)");
-:}
-         | WRITE PARENTESIS_IZQ ID PARENTESIS_DER
-{:
-    System.out.println();
-    System.out.println("REDUCE: salida -> WRITE (ID)");
-:}
+termino ::= termino:t ASTERISCO factor:f
+            {:
+                System.out.println("termino -> termino ASTERISCO factor");
+                String type1 = getArgType(t);
+                String type2 = getArgType(f);
+                checkNumericCompatibility(type1, type2, "*");
+                RESULT = TercetoManager.addFolded("*", t, f);
+            :}
+         | termino:t BARRA_DIAGONAL factor:f
+            {:
+                System.out.println("termino -> termino BARRA_DIAGONAL factor");
+                if(isZeroConstant(f)) {
+                    throw new RuntimeException("Error de división: división por cero");
+                }
+                String type1 = getArgType(t);
+                String type2 = getArgType(f);
+                checkNumericCompatibility(type1, type2, "/");
+                RESULT = TercetoManager.addFolded("/", t, f);
+            :}
+         | termino:t DIV factor:f
+            {:
+                System.out.println("termino -> termino DIV factor");
+                if(isZeroConstant(f)) {
+                    throw new RuntimeException("Error de division: division por cero");
+                }
+                String type1 = getArgType(t);
+                String type2 = getArgType(f);
+                checkNumericCompatibility(type1, type2, "DIV");
+                RESULT = TercetoManager.addFolded("DIV", t, f);
+            :}
+         | termino:t MOD factor:f
+            {:
+                System.out.println("termino -> termino MOD factor");
+                if(isZeroConstant(f)) {
+                    throw new RuntimeException("Error de modulo: modulo por cero");
+                }
+                String type1 = getArgType(t);
+                String type2 = getArgType(f);
+                checkNumericCompatibility(type1, type2, "MOD");
+                RESULT = TercetoManager.addFolded("MOD", t, f);
+            :}
+         | factor:f
+            {:
+                System.out.println("termino -> factor");
+                RESULT = f;
+            :}
          ;
 
-entrada ::= READ PARENTESIS_IZQ ID PARENTESIS_DER
+factor ::= PARENTESIS_IZQ expresion:e PARENTESIS_DER
+            {:
+                System.out.println("factor -> PARENTESIS_IZQ expresion PARENTESIS_DER");
+                RESULT = e;
+            :}
+         | ID:id
+            {:
+                System.out.println("factor -> ID");
+                checkDeclared(id);
+                RESULT = id;
+            :}
+         | CTE_INT:c
+            {:
+                System.out.println("factor -> CTE_INT");
+                // Constante positiva: el máximo es 32767 (32768 solo es válido como -32768).
+                if (c > 32767) {
+                    throw new RuntimeException("Constante entera fuera de rango: " + c + " (máximo positivo 32767)");
+                }
+                RESULT = c.toString();
+            :}
+         | CTE_FLOAT:f
+            {:
+                System.out.println("factor -> CTE_FLOAT");
+                RESULT = f.toString();
+            :}
+         | CTE_STR:s
+            {:
+                System.out.println("factor -> CTE_STR");
+                RESULT = s;
+            :}
+         | SIMBOLO_MENOS CTE_INT:s
+            {:
+                System.out.println("factor -> SIMBOLO_MENOS CTE_INT");
+                RESULT = "-"+ s;
+            :}
+         ;
+
+
+cond_con_else ::=
+    IF PARENTESIS_IZQ gen_bf:bf PARENTESIS_DER
+    LLAVE_IZQ bloque LLAVE_DER
+    gen_bi:bi
+    ELSE m:inicioElse LLAVE_IZQ bloque LLAVE_DER
+    {:
+        System.out.println("cond_con_else -> IF PARENTESIS_IZQ gen_bf PARENTESIS_DER LLAVE_IZQ bloque LLAVE_DER gen_bi ELSE m LLAVE_IZQ bloque LLAVE_DER");
+        // si la condición fue falsa, salto al ELSE
+        TercetoManager.patch(bf, 1, TercetoManager.ref(inicioElse));
+
+        TercetoManager.patch(bi, 1, TercetoManager.ref(TercetoManager.nextIndex()));
+    :}
+;
+
+
+m ::=
 {:
-    System.out.println();
-    System.out.println("REDUCE: entrada -> READ (ID)");
+    RESULT = TercetoManager.nextIndex();
+:}
+;
+
+gen_bf ::= condicion:c
+{:
+    // Extraer operador y referencia de la condición
+    String op = extraerOperador(c);
+    String ref = extraerReferencia(c);
+    
+    // Si es una comparación simple con operador, invertir el operador
+    String saltOp = (op != null) ? invertirOperador(op) : "BF";
+    
+    // Generar terceto de salto: (op_inverso, ref, "??")
+    int bf = TercetoManager.add(saltOp, "_", "_");
+    RESULT = bf;
+:}
+;
+
+gen_bi ::=
+{:
+    int bi = TercetoManager.add("BI", "??", "_");
+    RESULT = bi;
+:}
+;
+
+cond_sin_else ::=
+    IF PARENTESIS_IZQ gen_bf:bf PARENTESIS_DER
+    LLAVE_IZQ bloque LLAVE_DER
+    {:
+        System.out.println("cond_sin_else -> IF PARENTESIS_IZQ gen_bf PARENTESIS_DER LLAVE_IZQ bloque LLAVE_DER");
+        int next = TercetoManager.nextIndex();
+        TercetoManager.patch(bf, 1, TercetoManager.ref(next));
+    :}
+;
+
+
+/* Condiciones */
+condicion ::= comparacion:c
+            {:
+                System.out.println("condicion -> comparacion");
+                RESULT = c;
+            :}
+            |
+            NOT condicion:c
+            {:
+                System.out.println("condicion -> NOT condicion");
+                int i = TercetoManager.add("NOT", c, "-");
+                RESULT = TercetoManager.ref(i);    
+            :}  
+            | condicion:c1 AND condicion:c2
+            {:
+                System.out.println("condicion -> condicion AND condicion");
+                int i = TercetoManager.add("AND", c1, c2);
+                RESULT = TercetoManager.ref(i);
+            :}
+            | condicion:c1 OR condicion:c2
+            {:
+                System.out.println("condicion -> condicion OR condicion");
+                int i = TercetoManager.add("OR", c1, c2);
+                RESULT = TercetoManager.ref(i);
+            :}
+            ;
+
+comparacion ::= expresion:e1 comparador:op expresion:e2
+            {:
+                System.out.println("comparacion -> expresion comparador expresion");
+             int i = TercetoManager.add("CMP", e1, e2);
+             // Retornar formato "op:[ref]" para que gen_bf pueda invertir el operador
+             RESULT = op + ":" + TercetoManager.ref(i);
+            :}
+            ;
+
+comparador ::= EQ {: System.out.println("comparador -> EQ"); RESULT = "=="; :}
+             | SIMBOLO_MENOR {: System.out.println("comparador -> SIMBOLO_MENOR"); RESULT = "<"; :}
+             | SIMBOLO_MAYOR {: System.out.println("comparador -> SIMBOLO_MAYOR"); RESULT = ">"; :}
+             | SIMBOLO_MENOR_O_IGUAL {: System.out.println("comparador -> SIMBOLO_MENOR_O_IGUAL"); RESULT = "<="; :}
+             | SIMBOLO_MAYOR_O_IGUAL {: System.out.println("comparador -> SIMBOLO_MAYOR_O_IGUAL"); RESULT = ">="; :}
+             | SIMBOLO_DISTINTO {: System.out.println("comparador -> SIMBOLO_DISTINTO"); RESULT = "!="; :}
+             ;
+             
+
+/* Iteración */
+iteracion ::= WHILE PARENTESIS_IZQ  m:inicio gen_bf:bf PARENTESIS_DER LLAVE_IZQ bloque LLAVE_DER
+            {:
+             System.out.println("iteracion -> WHILE m PARENTESIS_IZQ gen_bf PARENTESIS_DER LLAVE_IZQ bloque LLAVE_DER");
+             // salto al inicio para repetir
+             String salto = TercetoManager.ref(inicio);
+             System.out.println("Salto al inicio del WHILE: " + salto);
+            TercetoManager.add("BI", salto ,"_" );
+
+            // parchear BF al final del while
+        
+            TercetoManager.patch(bf, 1, TercetoManager.ref(TercetoManager.nextIndex()));
+            :}
+            ;
+
+step_opcional ::= STEP CTE_INT:s
+                {:
+                    System.out.println("step_opcional -> STEP CTE_INT");
+                    // Step positivo: mismo límite que cualquier constante positiva.
+                    if (s > 32767) {
+                        throw new RuntimeException("Constante entera fuera de rango: " + s + " (máximo positivo 32767)");
+                    }
+                    RESULT = s;
+                :}
+                |
+                    STEP SIMBOLO_MENOS CTE_INT:s
+                {:
+                    System.out.println("step_opcional -> STEP CTE_INT");
+                    RESULT = -s;
+                :}
+                | 
+                {:
+                    System.out.println("step_opcional -> epsilon");
+                    RESULT = 1;
+                :}
+                ;
+
+for_bucle ::=
+    FOR ID:id ASIG expresion:desde
+    {:
+        System.out.println("for_bucle -> FOR ID ASIG expresion TO expresion step_opcional bloque NEXT ID");
+        // Verificar tipo del ID solo si hay declaraciones explícitas
+        if (TercetoManager.getHasDeclaredVariables()) {
+            checkDeclared(id);
+            String idType = SymbolTable.get(id).getType();
+            if (!"Int".equals(idType) && !"Float".equals(idType)) {
+                throw new RuntimeException("La variable de control del FOR debe ser numérica (Int o Float), pero '" + id + "' es de tipo " + idType);
+            }
+        }
+        // inicialización
+        TercetoManager.add(":=", id, desde);
+    :}
+    TO expresion:hasta
+    step_opcional:step
+    m:inicioCond
+    {:
+        // El step ya se conoce: se elige el comparador según su signo.
+        //   step >= 0 (ascendente):  seguir mientras id <= hasta ; salir con id >  hasta (BGT)
+        //   step <  0 (descendente): seguir mientras id >= hasta ; salir con id <  hasta (BLT)
+        String comparador = (step < 0) ? ">=" : "<=";
+        int comp = TercetoManager.add("CMP", id, hasta);
+        String opInv = invertirOperador(comparador);
+        int bf = TercetoManager.add(opInv, TercetoManager.ref(comp), "_");
+        TercetoManager.pushIndex(bf);
+    :}
+    bloque
+    NEXT ID:id2
+    {:
+        // opcional validar NEXT id
+        if(!id.equals(id2)) {
+            throw new RuntimeException("NEXT ID no coincide con FOR ID: se esperaba '" + id + "' pero se encontró '" + id2 + "'");
+        }
+
+        int operacion;
+        if(step < 0) {
+            // Si el step es negativo, restar en lugar de sumar
+            operacion = TercetoManager.add("-", id, String.valueOf(-step)); // en este caso ya va a ser un string
+        }else{
+            operacion = TercetoManager.add("+", id, String.valueOf(step)); // step es un entero, se convierte
+        }
+
+        TercetoManager.add(":=", id, TercetoManager.ref(operacion));
+
+        // volver a condición
+        TercetoManager.add("BI", TercetoManager.ref(inicioCond), "_");
+
+        // parchear BF al final
+        int bf = TercetoManager.popIndex();
+        int fin = TercetoManager.nextIndex();
+        TercetoManager.patch(bf, 1, TercetoManager.ref(fin));
+    :}
+;
+
+salida ::= WRITE PARENTESIS_IZQ CTE_STR:s PARENTESIS_DER
+{:
+    System.out.println("salida -> WRITE PARENTESIS_IZQ CTE_STR PARENTESIS_DER");
+    TercetoManager.add("WRITE", s, "-");
+:}
+         | WRITE PARENTESIS_IZQ ID:id PARENTESIS_DER
+{:
+    System.out.println("salida -> WRITE PARENTESIS_IZQ ID PARENTESIS_DER");
+    checkDeclared(id);
+    TercetoManager.add("WRITE", id, "-");
+:}
+         ;
+         
+entrada ::= READ PARENTESIS_IZQ ID:id PARENTESIS_DER
+{:
+    System.out.println("entrada -> READ PARENTESIS_IZQ ID PARENTESIS_DER");
+    checkDeclared(id);
+    TercetoManager.add("READ", id, "-");
 :}
           ;

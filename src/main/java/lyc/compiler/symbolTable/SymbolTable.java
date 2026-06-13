@@ -13,4 +13,8 @@ public class SymbolTable {
     public static Map<String, SymbolTableEntry> getSymbols() {
         return symbols;
     }
+
+    public static SymbolTableEntry get(String lexeme) {
+        return symbols.get(lexeme);
+    }
 }
