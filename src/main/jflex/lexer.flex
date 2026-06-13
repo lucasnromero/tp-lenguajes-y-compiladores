@@ -95,8 +95,8 @@ QUOTE3 = ”
 CTESTR = ({QUOTE1}([^\"\r\n])*{QUOTE1})|({QUOTE2}([^”\r\n])*{QUOTE3})
 /*CTESTR = \"([^\"\r\n])*\"*/
 
-/* Caracteres válidos para validar dentro de comentarios: (letras, dígitos, espacios y los símbolos de nuestro lenguaje). */
-CommentChar = [a-zA-Z0-9 \t\r\n!\"#+\-*/<>=:(),.{}“”]
+/* Caracteres válidos dentro de comentarios: letras, dígitos, espacios, los símbolos del lenguaje y tildes. */
+CommentChar = [a-zA-Z0-9 \t\r\n!\"#+\-*/<>=:(),.{}“”áéíóúüñÁÉÍÓÚÜÑ¿¡]
 
 
 

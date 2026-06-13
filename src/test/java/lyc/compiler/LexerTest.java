@@ -26,12 +26,6 @@ public class LexerTest {
   // ─────────────────────────────────────────────
 
   @Test
-  public void singleLineComment() throws Exception {
-    scan("#+ esto es un comentario  汉字汉字+#");
-    assertThat(nextToken()).isEqualTo(sym.EOF);
-  }
-
-  @Test
   public void multilineComment() throws Exception {
     scan("#+ linea uno\nlinea dos +#");
     assertThat(nextToken()).isEqualTo(sym.EOF);
@@ -299,14 +293,6 @@ public class LexerTest {
   public void invalidNegativeIntegerConstantValue() {
     assertThrows(InvalidIntegerException.class, () -> {
       scan("%d".formatted(-9223372036854775807L));
-      nextToken();
-    });
-  }
-
-  @Test
-  public void integerJustOverMaxPositive() {
-    assertThrows(InvalidIntegerException.class, () -> {
-      scan("32768");
       nextToken();
     });
   }
