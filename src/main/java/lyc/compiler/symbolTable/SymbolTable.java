@@ -17,4 +17,8 @@ public class SymbolTable {
     public static SymbolTableEntry get(String lexeme) {
         return symbols.get(lexeme);
     }
+
+    public static void reset() {
+        symbols.clear();
+    }
 }

@@ -12,13 +12,13 @@ public final class ParserFactory {
 
     public static parser create(String input) {
         TercetoManager.reset();
-        // SymbolTable no tiene reset, pero puede limpiarse si es necesario
+        SymbolTable.reset();
         return new parser(LexerFactory.create(input));
     }
 
     public static parser create(Reader reader) {
         TercetoManager.reset();
-        // SymbolTable no tiene reset, pero puede limpiarse si es necesario
+        SymbolTable.reset();
         return new parser(LexerFactory.create(reader));
     }
 

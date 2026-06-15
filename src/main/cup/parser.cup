@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import lyc.compiler.symbolTable.*;
 import lyc.compiler.tercetos.*;
+import lyc.compiler.files.*;
 
 parser code {:
   public void report_error(String message, Object info) {
@@ -231,14 +232,17 @@ start with programa;
 programa ::= bloque_init bloque
             {:
                 System.out.println("programa -> bloque_init bloque");
+                FileOutputWriter.writeOutput("final.asm", new AsmCodeGenerator());
             :}
             | bloque_init
             {:
                 System.out.println("programa -> bloque_init");
+                FileOutputWriter.writeOutput("final.asm", new AsmCodeGenerator());
             :}
             | bloque
             {:
                 System.out.println("programa -> bloque");
+                FileOutputWriter.writeOutput("final.asm", new AsmCodeGenerator());
             :}
             | 
             {:

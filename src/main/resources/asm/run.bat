@@ -1,10 +1,13 @@
-PATH=C:\TASM;
+@echo off
+
+SET PATH=%PATH%;%CD%\TASM
 
 tasm numbers.asm
 tasm final.asm
 tlink final.obj numbers.obj
+
+pause
+
 final.exe
-del final.obj
-del numbers.obj 
-del final.exe
-del final.map
+
+pause
