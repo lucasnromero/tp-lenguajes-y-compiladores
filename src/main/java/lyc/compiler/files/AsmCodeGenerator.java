@@ -2,6 +2,7 @@ package lyc.compiler.files;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +13,123 @@ import lyc.compiler.tercetos.Terceto;
 import lyc.compiler.tercetos.TercetoManager;
 
 public class AsmCodeGenerator implements FileGenerator {
+
+    private static class CmpInfo {
+        private final String left;
+        private final String right;
+
+        public CmpInfo(String left, String right) {
+            this.left = left;
+            this.right = right;
+        }
+
+        public String getLeft() {
+            return left;
+        }
+
+        public String getRight() {
+            return right;
+        }
+    }
+
+    private static class NotInfo {
+
+        private final String operator;
+        private final int cmpIndex;
+
+        public NotInfo(String operator, int cmpIndex) {
+            this.operator = operator;
+            this.cmpIndex = cmpIndex;
+        }
+
+        public String getOperator() {
+            return operator;
+        }
+
+        public int getCmpIndex() {
+            return cmpIndex;
+        }
+    }
+
+    private String negateOperator(String op) {
+
+        switch (op) {
+            case ">":
+                return "<=";
+
+            case "<":
+                return ">=";
+
+            case ">=":
+                return "<";
+
+            case "<=":
+                return ">";
+
+            case "==":
+                return "!=";
+
+            case "!=":
+                return "==";
+
+            default:
+                throw new RuntimeException(
+                        "Operador no soportado: " + op);
+        }
+    }
+
+    private void emitCmp(FileWriter fileWriter,String op1,String op2,String nl) throws IOException {
+
+        fileWriter.write(
+            String.format("    fld dword ptr [%s]%n", op1));
+
+        fileWriter.write(
+            String.format("    fld dword ptr [%s]%n", op2));
+
+        fileWriter.write("    fxch" + nl);
+        fileWriter.write("    fcomp" + nl);
+        fileWriter.write("    fstsw ax" + nl);
+        fileWriter.write("    ffree st(0)" + nl);
+        fileWriter.write("    sahf" + nl);
+    }
+
+    private static class LogicalRef {
+
+        private final String operator;
+        private final int cmpIndex;
+
+        public LogicalRef(String operator, int cmpIndex) {
+            this.operator = operator;
+            this.cmpIndex = cmpIndex;
+        }
+
+        public String getOperator() {
+            return operator;
+        }
+
+        public int getCmpIndex() {
+            return cmpIndex;
+        }
+    }
+
+    private LogicalRef parseLogicalRef(String value) {
+
+        int pos = value.indexOf(':');
+
+        String operator =
+                value.substring(0, pos);
+
+        String ref =
+                value.substring(pos + 1);
+
+        int idx =
+                Integer.parseInt(
+                        ref.substring(
+                                1,
+                                ref.length() - 1));
+
+        return new LogicalRef(operator, idx);
+    }
 
     private static String safeLabel(String name, Map<String, String> existing) {
         if (name == null || name.isBlank()) {
@@ -33,10 +151,97 @@ public class AsmCodeGenerator implements FileGenerator {
         return value.replace("\"", "\"\"");
     }
 
+    private String getTrueJump(String operator) {
+
+        switch (operator) {
+
+            case ">":
+                return "ja";
+
+            case "<":
+                return "jb";
+
+            case ">=":
+                return "jae";
+
+            case "<=":
+                return "jbe";
+
+            case "==":
+                return "je";
+
+            case "!=":
+                return "jne";
+
+            default:
+                throw new RuntimeException(
+                        "Operador no soportado: "
+                                + operator);
+        }
+    }
+
+    private String getFalseJump(String operator) {
+
+        switch (operator) {
+
+            case ">":
+                return "jbe";
+
+            case "<":
+                return "jae";
+
+            case ">=":
+                return "jb";
+
+            case "<=":
+                return "ja";
+
+            case "==":
+                return "jne";
+
+            case "!=":
+                return "je";
+
+            default:
+                throw new RuntimeException(
+                        "Operador no soportado: "
+                                + operator);
+        }
+    }
+
+    private LogicalRef resolveConditionRef(String value,Map<Integer, NotInfo> notMap) {
+
+        if (value.contains(":")) {
+            return parseLogicalRef(value);
+        }
+
+        int idx =
+                Integer.parseInt(
+                        value.substring(
+                                1,
+                                value.length() - 1));
+
+        NotInfo not = notMap.get(idx);
+
+        if (not != null) {
+
+            return new LogicalRef(
+                    negateOperator(
+                            not.getOperator()),
+                    not.getCmpIndex());
+        }
+
+        throw new RuntimeException(
+                "Referencia lógica inválida: "
+                        + value);
+    }
+
     @Override
     public void generate(FileWriter fileWriter) throws IOException {
         var symbols = SymbolTable.getSymbols();
         List<Terceto> tercetos = TercetoManager.getAll();
+        Map<Integer, CmpInfo> cmpMap = new HashMap<>();
+        Map<Integer, NotInfo> notMap = new HashMap<>();
 
         String nl = System.lineSeparator();
 
@@ -141,6 +346,8 @@ public class AsmCodeGenerator implements FileGenerator {
             }
         };
 
+        
+
         for (int i = 0; i < tercetos.size(); i++) {
             Terceto t = tercetos.get(i);
             String op = t.getOp();
@@ -179,6 +386,7 @@ public class AsmCodeGenerator implements FileGenerator {
                     break;
                 case "CMP": {
                     // Compare a1 with a2 using FPU and set flags
+                    /* 
                     String op1 = resolve.apply(a1);
                     String op2 = resolve.apply(a2);
                     fileWriter.write(String.format("    fld dword ptr [%s]%n", op1));
@@ -188,96 +396,223 @@ public class AsmCodeGenerator implements FileGenerator {
                     fileWriter.write("    fstsw ax" + nl);
                     fileWriter.write("    ffree st(0)" + nl);
                     fileWriter.write("    sahf" + nl);
+                    */
+                    cmpMap.put(i,new CmpInfo(resolve.apply(a1),resolve.apply(a2)));
                     break;
+                    
                 }
                 case "BF":
-                    // Branch if false -> use JBE as default (matches macros usage)
-                    if (a1 != null && a1.startsWith("[")) {
-                        int target = Integer.parseInt(a1.substring(1, a1.length() - 1));
-                        fileWriter.write(String.format("    jbe ET_%d%n", target));
+                    int target =
+                    Integer.parseInt(
+                            a1.substring(
+                                    1,
+                                    a1.length() - 1));
+
+                    Terceto prev =(i > 0)? tercetos.get(i - 1) : null;
+
+                    if (prev != null &&"AND".equals(prev.getOp())) {
+
+                        LogicalRef left =
+                        resolveConditionRef(
+                                prev.getArg1(),
+                                notMap);
+
+                        LogicalRef right =
+                        resolveConditionRef(
+                                prev.getArg2(),
+                                notMap);
+
+                        CmpInfo cmp1 =cmpMap.get(left.getCmpIndex());
+
+                        CmpInfo cmp2 = cmpMap.get(right.getCmpIndex());
+
+                        emitCmp(
+                                fileWriter,
+                                cmp1.getLeft(),
+                                cmp1.getRight(),
+                                nl);
+
+                        fileWriter.write(
+                                String.format(
+                                        "    %s ET_%d%n",
+                                        getFalseJump(
+                                                left.getOperator()),
+                                        target));
+
+                        emitCmp(
+                                fileWriter,
+                                cmp2.getLeft(),
+                                cmp2.getRight(),
+                                nl);
+
+                        fileWriter.write(
+                                String.format(
+                                        "    %s ET_%d%n",
+                                        getFalseJump(
+                                                right.getOperator()),
+                                        target));
+
+                        break;
                     }
+                    if (prev != null && "OR".equals(prev.getOp())) {
+
+                    LogicalRef left =
+                        resolveConditionRef(
+                                prev.getArg1(),
+                                notMap);
+
+                        LogicalRef right =
+                        resolveConditionRef(
+                                prev.getArg2(),
+                                notMap);
+
+                    CmpInfo cmp1 = cmpMap.get(left.getCmpIndex());
+
+                    CmpInfo cmp2 =cmpMap.get(right.getCmpIndex());
+
+                    String trueLabel ="OR_TRUE_" + i;
+
+                    // Primera condición
+
+                    emitCmp( fileWriter,cmp1.getLeft(),cmp1.getRight(),nl);
+
+                    fileWriter.write(String.format("    %s %s%n",getTrueJump(
+                                            left.getOperator()),
+                                    trueLabel));
+
+                    // Segunda condición
+
+                    emitCmp(
+                            fileWriter,
+                            cmp2.getLeft(),
+                            cmp2.getRight(),
+                            nl);
+
+                    fileWriter.write(
+                            String.format(
+                                    "    %s %s%n",
+                                    getTrueJump(
+                                            right.getOperator()),
+                                    trueLabel));
+
+                    // Ninguna fue verdadera
+
+                    fileWriter.write(
+                            String.format(
+                                    "    jmp ET_%d%n",
+                                    target));
+
+                    // Alguna fue verdadera
+
+                    fileWriter.write(
+                            trueLabel + ":" + nl);
+
                     break;
+                }
+                    
+                    break;
+             
                 case "BI":
                     // Unconditional jump
                     if (a1 != null && a1.startsWith("[")) {
-                        int target = Integer.parseInt(a1.substring(1, a1.length() - 1));
+                        target = Integer.parseInt(a1.substring(1, a1.length() - 1));
                         fileWriter.write(String.format("    jmp ET_%d%n", target));
                     }
                     break;
-                case "BNE":
-                    if (a1 != null && a1.startsWith("[")) {
-                        int target = Integer.parseInt(a1.substring(1, a1.length() - 1));
-                        fileWriter.write(String.format("    jne ET_%d%n", target));
-                    }
+                case "BNE": 
+
+                    target =
+                            Integer.parseInt(
+                                    a1.substring(
+                                            1,
+                                            a1.length() - 1));
+
+                    CmpInfo cmp =
+                            cmpMap.get(i - 1);
+
+                    emitCmp(
+                            fileWriter,
+                            cmp.getLeft(),
+                            cmp.getRight(),
+                            nl);
+
+                    fileWriter.write(
+                            String.format(
+                                    "    jne ET_%d%n",
+                                    target));
+
                     break;
-                case "BLE":
-                    if (a1 != null && a1.startsWith("[")) {
-                        int target = Integer.parseInt(a1.substring(1, a1.length() - 1));
-                        fileWriter.write(String.format("    jbe ET_%d%n", target));
-                    }
+                
+                case "BLE": 
+
+                    target =
+                            Integer.parseInt(
+                                    a1.substring(
+                                            1,
+                                            a1.length() - 1));
+
+                    cmp =
+                            cmpMap.get(i - 1);
+
+                    emitCmp(
+                            fileWriter,
+                            cmp.getLeft(),
+                            cmp.getRight(),
+                            nl);
+
+                    fileWriter.write(
+                            String.format(
+                                    "    jbe ET_%d%n",
+                                    target));
+
                     break;
-                case "BGE":
-                    if (a1 != null && a1.startsWith("[")) {
-                        int target = Integer.parseInt(a1.substring(1, a1.length() - 1));
-                        fileWriter.write(String.format("    jae ET_%d%n", target));
-                    }
+                
+                case "BGE": 
+
+                    target =
+                            Integer.parseInt(
+                                    a1.substring(
+                                            1,
+                                            a1.length() - 1));
+
+                    cmp =
+                            cmpMap.get(i - 1);
+
+                    emitCmp(
+                            fileWriter,
+                            cmp.getLeft(),
+                            cmp.getRight(),
+                            nl);
+
+                    fileWriter.write(
+                            String.format(
+                                    "    jae ET_%d%n",
+                                    target));
+
                     break;
                 case "BLT":
                     if (a1 != null && a1.startsWith("[")) {
-                        int target = Integer.parseInt(a1.substring(1, a1.length() - 1));
+                        target = Integer.parseInt(a1.substring(1, a1.length() - 1));
                         fileWriter.write(String.format("    jb ET_%d%n", target));
                     }
                     break;
                 case "BGT":
                     if (a1 != null && a1.startsWith("[")) {
-                        int target = Integer.parseInt(a1.substring(1, a1.length() - 1));
+                        target = Integer.parseInt(a1.substring(1, a1.length() - 1));
                         fileWriter.write(String.format("    ja ET_%d%n", target));
                     }
                     break;
-                case "AND": {
-                    // Boolean AND with short-circuit: if a1 is false, skip a2 and store 0
-                    String la1 = resolve.apply(a1);
-                    String la2 = resolve.apply(a2);
-                    fileWriter.write(String.format("    mov eax, dword ptr [%s]%n", la1));
-                    fileWriter.write("    test eax, eax" + nl);
-                    fileWriter.write(String.format("    je AND_FALSE_%d%n", i));
-                    fileWriter.write(String.format("    mov ebx, dword ptr [%s]%n", la2));
-                    fileWriter.write("    test ebx, ebx" + nl);
-                    fileWriter.write(String.format("    je AND_FALSE_%d%n", i));
-                    fileWriter.write("    mov eax, 1" + nl);
-                    fileWriter.write(String.format("    jmp AND_END_%d%n", i));
-                    fileWriter.write(String.format("AND_FALSE_%d:" + nl, i));
-                    fileWriter.write("    mov eax, 0" + nl);
-                    fileWriter.write(String.format("AND_END_%d:" + nl, i));
-                    fileWriter.write(String.format("    mov dword ptr [%s], eax%n", r));
-                    break;
-                }
-                case "OR": {
-                    // Boolean OR with short-circuit: if a1 is true, skip a2 and store 1
-                    String la1 = resolve.apply(a1);
-                    String la2 = resolve.apply(a2);
-                    fileWriter.write(String.format("    mov eax, dword ptr [%s]%n", la1));
-                    fileWriter.write("    test eax, eax" + nl);
-                    fileWriter.write(String.format("    jne OR_TRUE_%d%n", i));
-                    fileWriter.write(String.format("    mov ebx, dword ptr [%s]%n", la2));
-                    fileWriter.write("    test ebx, ebx" + nl);
-                    fileWriter.write(String.format("    jne OR_TRUE_%d%n", i));
-                    fileWriter.write("    mov eax, 0" + nl);
-                    fileWriter.write(String.format("    jmp OR_END_%d%n", i));
-                    fileWriter.write(String.format("OR_TRUE_%d:" + nl, i));
-                    fileWriter.write("    mov eax, 1" + nl);
-                    fileWriter.write(String.format("OR_END_%d:" + nl, i));
-                    fileWriter.write(String.format("    mov dword ptr [%s], eax%n", r));
-                    break;
-                }
                 case "NOT": {
-                    // Boolean NOT: r = !a1
-                    String la = resolve.apply(a1);
-                    fileWriter.write(String.format("    mov eax, dword ptr [%s]%n", la));
-                    fileWriter.write("    test eax, eax" + nl);
-                    fileWriter.write("    sete al" + nl);
-                    fileWriter.write("    movzx eax, al" + nl);
-                    fileWriter.write(String.format("    mov dword ptr [%s], eax%n", r));
+                    LogicalRef ref =
+                    parseLogicalRef(a1);
+
+                    notMap.put(
+                            i,
+                            new NotInfo(
+                                    ref.getOperator(),
+                                    ref.getCmpIndex()
+                            ));
+
                     break;
                 }
                 case ":=": {

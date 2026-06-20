@@ -3,15 +3,14 @@ init {
     
 }
 
-a := 3
-b := 5
-c := a + b
+a := 7
+b := 3
+if (NOT a > 5 AND NOT b > 5) {
+    write("ok")
+}
+else {
+    write("not ok")
+}
 
-if (c > 7){
-    write("Mayor a 7")
-}
-else{
-    write("Menor o igual a 7")
-}
 
 

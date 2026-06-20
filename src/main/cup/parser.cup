@@ -232,7 +232,13 @@ start with programa;
 programa ::= bloque_init bloque
             {:
                 System.out.println("programa -> bloque_init bloque");
+                List<Terceto> original = new ArrayList<>(TercetoManager.getAll());
+                System.out.println("\n=== TERCETOS ORIGINALES ===");
+                for (int j = 0; j < original.size(); j++) {
+                    System.out.println("[" + j + "] " + original.get(j).toString());
+                }
                 FileOutputWriter.writeOutput("final.asm", new AsmCodeGenerator());
+
             :}
             | bloque_init
             {:
@@ -241,7 +247,13 @@ programa ::= bloque_init bloque
             :}
             | bloque
             {:
+
                 System.out.println("programa -> bloque");
+                List<Terceto> original = new ArrayList<>(TercetoManager.getAll());
+                System.out.println("\n=== TERCETOS ORIGINALES ===");
+                for (int j = 0; j < original.size(); j++) {
+                    System.out.println("[" + j + "] " + original.get(j).toString());
+                }
                 FileOutputWriter.writeOutput("final.asm", new AsmCodeGenerator());
             :}
             | 
@@ -519,6 +531,14 @@ condicion ::= comparacion:c
             | condicion:c1 AND condicion:c2
             {:
                 System.out.println("condicion -> condicion AND condicion");
+                //String con1="",con2="";
+               // int pos1 = c1.indexOf('[');
+               // int pos2 = c2.indexOf('[');
+                //if (pos1 != -1)
+                //con1 = c1.substring(pos1);
+
+               //if (pos2 != -1)
+                //con2 = c2.substring(pos2);
                 int i = TercetoManager.add("AND", c1, c2);
                 RESULT = TercetoManager.ref(i);
             :}
