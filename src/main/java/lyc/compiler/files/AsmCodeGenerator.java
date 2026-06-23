@@ -737,11 +737,11 @@ public class AsmCodeGenerator implements FileGenerator {
                             } else if ("Int".equals(typ)) {
                                 fileWriter.write(String.format("    DisplayInteger %s%n", l));
                             } else {
-                                fileWriter.write(String.format("    DisplayFloat %s, 6%n", l));
+                                fileWriter.write(String.format("    DisplayFloat %s, 2%n", l));
                             }
                         } else if (constLabel.containsKey(a1)) {
                             // numeric constant
-                            fileWriter.write(String.format("    DisplayFloat %s, 6%n", l));
+                            fileWriter.write(String.format("    DisplayFloat %s, 2%n", l));
                         } else {
                             // fallback: try printing as string
                             fileWriter.write(String.format("    mov dx,OFFSET %s%n", l));

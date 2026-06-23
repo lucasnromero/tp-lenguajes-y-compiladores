@@ -1,11 +1,9 @@
 init {
-    a, c, i : Int
-    d : String
     b : Float 
 }
-d := "Hola"
-a := 0
-b := 5.0 div 2
+
+
+b := 5.0 mod 2.0
 
 write(b)
 
