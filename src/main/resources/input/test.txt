@@ -1,17 +1,11 @@
 init {
-    a, b, c : Float
+    a, c, i : Int
     d : String
-    
+    b : Float 
 }
 d := "Hola"
-a := 5
-b := 3 div 3 
-if (NOT a > 5 AND NOT b > 5) {
-    write("ok")
-}
-else {
-    write("not ok")
-}
+a := 0
+b := 5.0 div 2
 
-
+write(b)
 

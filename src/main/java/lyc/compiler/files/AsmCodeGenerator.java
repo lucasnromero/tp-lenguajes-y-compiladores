@@ -354,6 +354,7 @@ public class AsmCodeGenerator implements FileGenerator {
             String a1 = t.getArg1();
             String a2 = t.getArg2();
             String r = tercToLabel.get(i);
+            String tipo = t.getType();
 
             // Emit label for this terceto (targets jump labels will point here)
             fileWriter.write(String.format("ET_%d:" + nl, i));
@@ -384,19 +385,64 @@ public class AsmCodeGenerator implements FileGenerator {
                     fileWriter.write("    fdivp" + nl);
                     fileWriter.write(String.format("    fstp dword ptr [%s]%n", r));
                     break;
+
+                case "MOD": {
+
+                    if ("Int".equals(tipo)) {
+
+                        String op1 = resolve.apply(a1);
+                        String op2 = resolve.apply(a2);
+
+                        fileWriter.write(
+                                String.format(
+                                        "    mov eax, dword ptr [%s]%n",
+                                        op1));
+
+                        fileWriter.write("    cdq" + nl);
+
+                        fileWriter.write(
+                                String.format(
+                                        "    mov ebx, dword ptr [%s]%n",
+                                        op2));
+
+                        fileWriter.write("    idiv ebx" + nl);
+
+                        fileWriter.write(
+                                String.format(
+                                        "    mov dword ptr [%s], edx%n",
+                                        r));
+                    }
+                    else if ("Float".equals(tipo)) {
+
+                        String op1 = resolve.apply(a1);
+                        String op2 = resolve.apply(a2);
+
+                        fileWriter.write(
+                                String.format(
+                                        "    fld dword ptr [%s]%n",
+                                        op1));
+
+                        fileWriter.write(
+                                String.format(
+                                        "    fld dword ptr [%s]%n",
+                                        op2));
+
+                        fileWriter.write("    fxch" + nl);
+
+                        fileWriter.write("    fprem" + nl);
+
+                        fileWriter.write(
+                                String.format(
+                                        "    fstp dword ptr [%s]%n",
+                                        r));
+                        fileWriter.write("ffree st(0)" + nl);
+                    }
+                    
+                    break;
+
+                }
                 case "CMP": {
-                    // Compare a1 with a2 using FPU and set flags
-                    /* 
-                    String op1 = resolve.apply(a1);
-                    String op2 = resolve.apply(a2);
-                    fileWriter.write(String.format("    fld dword ptr [%s]%n", op1));
-                    fileWriter.write(String.format("    fld dword ptr [%s]%n", op2));
-                    fileWriter.write("    fxch" + nl);
-                    fileWriter.write("    fcomp" + nl);
-                    fileWriter.write("    fstsw ax" + nl);
-                    fileWriter.write("    ffree st(0)" + nl);
-                    fileWriter.write("    sahf" + nl);
-                    */
+                    
                     cmpMap.put(i,new CmpInfo(resolve.apply(a1),resolve.apply(a2)));
                     break;
                     
@@ -591,16 +637,49 @@ public class AsmCodeGenerator implements FileGenerator {
 
                     break;
                 case "BLT":
-                    if (a1 != null && a1.startsWith("[")) {
-                        target = Integer.parseInt(a1.substring(1, a1.length() - 1));
-                        fileWriter.write(String.format("    jb ET_%d%n", target));
-                    }
+                    target =
+                            Integer.parseInt(
+                                    a1.substring(
+                                            1,
+                                            a1.length() - 1));
+
+                    cmp =
+                            cmpMap.get(i - 1);
+
+                    emitCmp(
+                            fileWriter,
+                            cmp.getLeft(),
+                            cmp.getRight(),
+                            nl);
+
+                    fileWriter.write(
+                            String.format(
+                                    "    jb ET_%d%n",
+                                    target));
+
                     break;
+                    
                 case "BGT":
-                    if (a1 != null && a1.startsWith("[")) {
-                        target = Integer.parseInt(a1.substring(1, a1.length() - 1));
-                        fileWriter.write(String.format("    ja ET_%d%n", target));
-                    }
+                    target =
+                            Integer.parseInt(
+                                    a1.substring(
+                                            1,
+                                            a1.length() - 1));
+
+                    cmp =
+                            cmpMap.get(i - 1);
+
+                    emitCmp(
+                            fileWriter,
+                            cmp.getLeft(),
+                            cmp.getRight(),
+                            nl);
+
+                    fileWriter.write(
+                            String.format(
+                                    "    ja ET_%d%n",
+                                    target));
+
                     break;
                 case "NOT": {
                     LogicalRef ref =
