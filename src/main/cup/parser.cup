@@ -84,7 +84,7 @@ parser code {:
     if ("Int".equals(targetType)) {
       return "Int".equals(sourceType); // Solo Int = Int
     } else if ("Float".equals(targetType)) {
-      return "Float".equals(sourceType) || "Int".equals(sourceType); // Float = Float o Float = Int
+      return "Float".equals(sourceType); // Solo Float = Float
     } else if ("String".equals(targetType)) {
       return "String".equals(sourceType); // Solo String = String
     }
@@ -349,6 +349,21 @@ asig_simple ::= ID:id ASIG expresion:e
                 
                 TercetoManager.add(":=", id, e);
             :}
+            | ID:id ASIG CTE_STR:s
+            {:
+                System.out.println("asig_simple -> ID ASIG CTE_STR");
+                checkDeclared(id);
+                SymbolTableEntry entry = SymbolTable.get(id);
+                
+                String targetType = entry.getType();
+                String sourceType = "String";
+                if (!isCompatible(targetType, sourceType)) {
+                    throw new RuntimeException("Incompatible types: cannot assign " + sourceType + " to " + targetType + ". Variable '" + id + "' is " + targetType + " but expression is " + sourceType);
+                }
+                
+                TercetoManager.add(":=", id, s);
+           
+            :}
             ;
 
 /* Expresiones */
@@ -403,7 +418,7 @@ termino ::= termino:t ASTERISCO factor:f
                 String type1 = getArgType(t);
                 String type2 = getArgType(f);
                 checkNumericCompatibility(type1, type2, "DIV");
-                RESULT = TercetoManager.addFolded("DIV", t, f);
+                RESULT = TercetoManager.addFolded("/", t, f);
             :}
          | termino:t MOD factor:f
             {:
@@ -447,11 +462,6 @@ factor ::= PARENTESIS_IZQ expresion:e PARENTESIS_DER
             {:
                 System.out.println("factor -> CTE_FLOAT");
                 RESULT = f.toString();
-            :}
-         | CTE_STR:s
-            {:
-                System.out.println("factor -> CTE_STR");
-                RESULT = s;
             :}
          | SIMBOLO_MENOS CTE_INT:s
             {:

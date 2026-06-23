@@ -1,10 +1,11 @@
 init {
-    a, b, c : Int
+    a, b, c : Float
+    d : String
     
 }
-
-a := 7
-b := 3
+d := "Hola"
+a := 5
+b := 3 div 3 
 if (NOT a > 5 AND NOT b > 5) {
     write("ok")
 }
