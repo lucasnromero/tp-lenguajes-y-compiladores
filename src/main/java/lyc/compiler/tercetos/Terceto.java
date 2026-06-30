@@ -1,7 +1,7 @@
 package lyc.compiler.tercetos;
 
 public class Terceto {
-    private final String op;
+    private String op;
     private String arg1;
     private String arg2;
     private String type;
@@ -25,6 +25,9 @@ public class Terceto {
         return arg2;
     }
 
+    public void setOp(String op) {
+        this.op = op;
+    }
     public void setArg1(String value) {
         this.arg1 = value;
     }

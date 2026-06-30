@@ -1,9 +1,12 @@
 init {
-    b : Float 
+    b,c,d : Float 
 }
 
+d := 0.0
+b := 5.0
 
-b := 5.0 mod 2.0
-
-write(b)
+while(b > 2.0){
+    write(b)
+    b := b - 1.0
+}
 

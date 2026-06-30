@@ -70,12 +70,17 @@ public class TercetoManager {
         return tercetos.get(index);
     }
 
+    public static Terceto get(String ref) {
+        return tercetos.get(Integer.parseInt(ref.substring(1, ref.length() - 1)));
+    }
+
     public static int nextIndex() {
     return tercetos.size();
     }
 
     public static void patch(int index, int argPos, String value) {
         Terceto t = tercetos.get(index);
+        if(argPos == 0) t.setOp(value);
         if(argPos == 1) t.setArg1(value);
         if(argPos == 2) t.setArg2(value);
     }
@@ -159,5 +164,9 @@ public static int popIndex() {
 
     private static boolean isNumeric(String type) {
         return "Int".equals(type) || "Float".equals(type);
+    }
+
+    public static int getIndex(String ref){
+        return Integer.parseInt(ref.substring(1, ref.length() - 1));
     }
 }

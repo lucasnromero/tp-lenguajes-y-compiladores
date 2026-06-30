@@ -211,7 +211,6 @@ non terminal List<String> lista_variables;
 non terminal String tipo_dato;
 non terminal Object for_bucle;
 /* reglas auxiliares */
-non terminal Integer gen_bf;
 non terminal Integer gen_bi;
 non terminal Integer m;
 non terminal Integer step_opcional;
@@ -472,14 +471,30 @@ factor ::= PARENTESIS_IZQ expresion:e PARENTESIS_DER
 
 
 cond_con_else ::=
-    IF PARENTESIS_IZQ gen_bf:bf PARENTESIS_DER
-    LLAVE_IZQ bloque LLAVE_DER
+    IF PARENTESIS_IZQ condicion:c PARENTESIS_DER
+    LLAVE_IZQ  m:inicioTrue bloque LLAVE_DER
     gen_bi:bi
     ELSE m:inicioElse LLAVE_IZQ bloque LLAVE_DER
     {:
         System.out.println("cond_con_else -> IF PARENTESIS_IZQ gen_bf PARENTESIS_DER LLAVE_IZQ bloque LLAVE_DER gen_bi ELSE m LLAVE_IZQ bloque LLAVE_DER");
         // si la condición fue falsa, salto al ELSE
-        TercetoManager.patch(bf, 1, TercetoManager.ref(inicioElse));
+        if (c.equals("OR")){
+            int saltoOR = TercetoManager.popIndex();
+            TercetoManager.patch(saltoOR,1,TercetoManager.ref(inicioTrue));
+            int indiceSalto = TercetoManager.popIndex();
+            TercetoManager.patch(indiceSalto,1,TercetoManager.ref(inicioElse));
+        }
+        else if(c.equals("AND")){
+            int indiceSalto = TercetoManager.popIndex();
+            TercetoManager.patch(indiceSalto,1,TercetoManager.ref(inicioElse));
+            indiceSalto = TercetoManager.popIndex();
+            TercetoManager.patch(indiceSalto,1,TercetoManager.ref(inicioElse));
+        }
+        else{
+            int indiceSalto = TercetoManager.getIndex(c);
+            TercetoManager.patch(indiceSalto, 1, TercetoManager.ref(inicioElse));
+        }
+        
 
         TercetoManager.patch(bi, 1, TercetoManager.ref(TercetoManager.nextIndex()));
     :}
@@ -492,20 +507,7 @@ m ::=
 :}
 ;
 
-gen_bf ::= condicion:c
-{:
-    // Extraer operador y referencia de la condición
-    String op = extraerOperador(c);
-    String ref = extraerReferencia(c);
-    
-    // Si es una comparación simple con operador, invertir el operador
-    String saltOp = (op != null) ? invertirOperador(op) : "BF";
-    
-    // Generar terceto de salto: (op_inverso, ref, "??")
-    int bf = TercetoManager.add(saltOp, "_", "_");
-    RESULT = bf;
-:}
-;
+
 
 gen_bi ::=
 {:
@@ -515,12 +517,29 @@ gen_bi ::=
 ;
 
 cond_sin_else ::=
-    IF PARENTESIS_IZQ gen_bf:bf PARENTESIS_DER
-    LLAVE_IZQ bloque LLAVE_DER
+    IF PARENTESIS_IZQ condicion:c PARENTESIS_DER
+    LLAVE_IZQ m:inicioTrue bloque LLAVE_DER
     {:
         System.out.println("cond_sin_else -> IF PARENTESIS_IZQ gen_bf PARENTESIS_DER LLAVE_IZQ bloque LLAVE_DER");
         int next = TercetoManager.nextIndex();
-        TercetoManager.patch(bf, 1, TercetoManager.ref(next));
+        if (c.equals("OR")){
+            int saltoOR = TercetoManager.popIndex();
+            TercetoManager.patch(saltoOR,1,TercetoManager.ref(inicioTrue));
+            int indiceSalto = TercetoManager.popIndex();
+            TercetoManager.patch(indiceSalto,1,TercetoManager.ref(next));
+        }
+        else if(c.equals("AND")){
+            int indiceSalto = TercetoManager.popIndex();
+            TercetoManager.patch(indiceSalto,1,TercetoManager.ref(next));
+            indiceSalto = TercetoManager.popIndex();
+            TercetoManager.patch(indiceSalto,1,TercetoManager.ref(next));
+        }
+        else{
+            int indiceSalto = TercetoManager.getIndex(c);
+            TercetoManager.patch(indiceSalto, 1, TercetoManager.ref(next));
+        }
+        
+        
     :}
 ;
 
@@ -532,40 +551,72 @@ condicion ::= comparacion:c
                 RESULT = c;
             :}
             |
-            NOT condicion:c
+            NOT comparacion:c
             {:
                 System.out.println("condicion -> NOT condicion");
-                int i = TercetoManager.add("NOT", c, "-");
-                RESULT = TercetoManager.ref(i);    
-            :}  
-            | condicion:c1 AND condicion:c2
-            {:
-                System.out.println("condicion -> condicion AND condicion");
-                //String con1="",con2="";
-               // int pos1 = c1.indexOf('[');
-               // int pos2 = c2.indexOf('[');
-                //if (pos1 != -1)
-                //con1 = c1.substring(pos1);
+                int indice = TercetoManager.getIndex(c);
+                String salto = TercetoManager.get(indice).getOp();
+                switch(salto) {
+                 case "BEQ": TercetoManager.patch(indice, 0, "BNE");  break;
+                 case "BNE": TercetoManager.patch(indice, 0, "BEQ");  break;
+                 case "BLT":  TercetoManager.patch(indice, 0, "BGE");  break;
+                 case "BGT":  TercetoManager.patch(indice, 0, "BLE");  break;
+                 case "BLE": TercetoManager.patch(indice, 0, "BGT");  break;
+                 case "BGE": TercetoManager.patch(indice, 0, "BLT");  break;
+                 default: break;
+                } // si hay un NOT, invierto el salto
+                
+                
+                RESULT = c;  
 
-               //if (pos2 != -1)
-                //con2 = c2.substring(pos2);
-                int i = TercetoManager.add("AND", c1, c2);
-                RESULT = TercetoManager.ref(i);
-            :}
-            | condicion:c1 OR condicion:c2
+            :}  
+            | comparacion:c1 AND comparacion:c2
             {:
-                System.out.println("condicion -> condicion OR condicion");
-                int i = TercetoManager.add("OR", c1, c2);
-                RESULT = TercetoManager.ref(i);
+               int Con1 = TercetoManager.getIndex(c1);
+               int Con2 = TercetoManager.getIndex(c2);
+               TercetoManager.pushIndex(Con2);
+               TercetoManager.pushIndex(Con1);
+               RESULT = "AND";
+            :}
+            | comparacion:c1 OR comparacion:c2
+            {:
+                int Con1 = TercetoManager.getIndex(c1);
+                int Con2 = TercetoManager.getIndex(c2);
+
+                String Op1 = TercetoManager.get(Con1).getOp();
+
+                switch(Op1) {
+                 case "BEQ": TercetoManager.patch(Con1, 0, "BNE");  break;
+                 case "BNE": TercetoManager.patch(Con1, 0, "BEQ");  break;
+                 case "BLT":  TercetoManager.patch(Con1, 0, "BGE");  break;
+                 case "BGT":  TercetoManager.patch(Con1, 0, "BLE");  break;
+                 case "BLE": TercetoManager.patch(Con1, 0, "BGT");  break;
+                 case "BGE": TercetoManager.patch(Con1, 0, "BLT");  break;
+                 default: break;
+                } // Invierto el salto de la primera condicion, que va a saltar a la parte TRUE si se cumple
+                TercetoManager.pushIndex(Con2);
+                TercetoManager.pushIndex(Con1); // es la que define si salta antes de hacer la segunda
+                RESULT = "OR";
             :}
             ;
+
+
 
 comparacion ::= expresion:e1 comparador:op expresion:e2
             {:
                 System.out.println("comparacion -> expresion comparador expresion");
              int i = TercetoManager.add("CMP", e1, e2);
-             // Retornar formato "op:[ref]" para que gen_bf pueda invertir el operador
-             RESULT = op + ":" + TercetoManager.ref(i);
+             int salto;
+             switch(op) {
+                 case "==": salto=TercetoManager.add("BNE","_","_"); break;
+                 case "!=": salto=TercetoManager.add("BEQ","_","_"); break;
+                 case "<":  salto=TercetoManager.add("BGE","_","_"); break;
+                 case ">":  salto=TercetoManager.add("BLE","_","_"); break;
+                 case "<=": salto=TercetoManager.add("BGT","_","_"); break;
+                 case ">=": salto=TercetoManager.add("BLT", "_","_"); break;
+                 default: throw new RuntimeException("Operador de comparación desconocido: " + op);
+             }
+             RESULT = TercetoManager.ref(salto);
             :}
             ;
 
@@ -579,17 +630,33 @@ comparador ::= EQ {: System.out.println("comparador -> EQ"); RESULT = "=="; :}
              
 
 /* Iteración */
-iteracion ::= WHILE PARENTESIS_IZQ  m:inicio gen_bf:bf PARENTESIS_DER LLAVE_IZQ bloque LLAVE_DER
+iteracion ::= WHILE PARENTESIS_IZQ  m:inicio condicion:c PARENTESIS_DER LLAVE_IZQ m:inicioTrue bloque LLAVE_DER
             {:
+
+            
              System.out.println("iteracion -> WHILE m PARENTESIS_IZQ gen_bf PARENTESIS_DER LLAVE_IZQ bloque LLAVE_DER");
              // salto al inicio para repetir
-             String salto = TercetoManager.ref(inicio);
-             System.out.println("Salto al inicio del WHILE: " + salto);
+            String salto = TercetoManager.ref(inicio);
             TercetoManager.add("BI", salto ,"_" );
 
+            if (c.equals("OR")){
+                int saltoOR = TercetoManager.popIndex();
+                TercetoManager.patch(saltoOR,1,TercetoManager.ref(inicioTrue));
+                int indiceSalto = TercetoManager.popIndex();
+                TercetoManager.patch(indiceSalto,1,TercetoManager.ref(TercetoManager.nextIndex()));
+            }
+            else if(c.equals("AND")){
+                int indiceSalto = TercetoManager.popIndex();
+                TercetoManager.patch(indiceSalto,1,TercetoManager.ref(TercetoManager.nextIndex()));
+                indiceSalto = TercetoManager.popIndex();
+                TercetoManager.patch(indiceSalto,1,TercetoManager.ref(TercetoManager.nextIndex()));
+            }
+            else{
+                int indiceSalto = TercetoManager.getIndex(c);
+                TercetoManager.patch(indiceSalto, 1, TercetoManager.ref(TercetoManager.nextIndex()));
+            }
+
             // parchear BF al final del while
-        
-            TercetoManager.patch(bf, 1, TercetoManager.ref(TercetoManager.nextIndex()));
             :}
             ;
 
