@@ -213,7 +213,7 @@ non terminal Object for_bucle;
 /* reglas auxiliares */
 non terminal Integer gen_bi;
 non terminal Integer m;
-non terminal Integer step_opcional;
+non terminal String step_opcional;
 
 /* Temas especiales */
 precedence left OR;
@@ -660,26 +660,39 @@ iteracion ::= WHILE PARENTESIS_IZQ  m:inicio condicion:c PARENTESIS_DER LLAVE_IZ
             :}
             ;
 
-step_opcional ::= STEP CTE_INT:s
+step_opcional ::= STEP CTE_FLOAT:s
+                {:
+                    System.out.println("step_opcional -> STEP CTE_FLOAT");
+                    RESULT = s.toString();
+                :}
+                |
+                    STEP CTE_INT:s
                 {:
                     System.out.println("step_opcional -> STEP CTE_INT");
                     // Step positivo: mismo límite que cualquier constante positiva.
                     if (s > 32767) {
                         throw new RuntimeException("Constante entera fuera de rango: " + s + " (máximo positivo 32767)");
                     }
-                    RESULT = s;
+                    RESULT = s.toString();
                 :}
                 |
                     STEP SIMBOLO_MENOS CTE_INT:s
                 {:
                     System.out.println("step_opcional -> STEP CTE_INT");
-                    RESULT = -s;
+                    RESULT = "-" +s;
+                :}
+                |
+                    STEP SIMBOLO_MENOS CTE_FLOAT:s
+                {:
+                    System.out.println("step_opcional -> STEP CTE_FLOAT");
+                    RESULT = "-" +s;
                 :}
                 | 
                 {:
                     System.out.println("step_opcional -> epsilon");
-                    RESULT = 1;
+                    RESULT = " ";
                 :}
+                
                 ;
 
 for_bucle ::=
@@ -704,26 +717,42 @@ for_bucle ::=
         // El step ya se conoce: se elige el comparador según su signo.
         //   step >= 0 (ascendente):  seguir mientras id <= hasta ; salir con id >  hasta (BGT)
         //   step <  0 (descendente): seguir mientras id >= hasta ; salir con id <  hasta (BLT)
-        String comparador = (step < 0) ? ">=" : "<=";
+    
         int comp = TercetoManager.add("CMP", id, hasta);
-        String opInv = invertirOperador(comparador);
-        int bf = TercetoManager.add(opInv, TercetoManager.ref(comp), "_");
+        int bf;
+        if (step.startsWith("-")) {
+            // Step negativo: bucle descendente
+            bf = TercetoManager.add("BLT", TercetoManager.ref(comp), "_");
+            
+        } else {
+            // Step positivo o cero: bucle ascendente
+            bf = TercetoManager.add("BGT", TercetoManager.ref(comp), "_");
+        
+        }
         TercetoManager.pushIndex(bf);
     :}
     bloque
     NEXT ID:id2
     {:
+        String idType = SymbolTable.get(id).getType();
         // opcional validar NEXT id
         if(!id.equals(id2)) {
             throw new RuntimeException("NEXT ID no coincide con FOR ID: se esperaba '" + id + "' pero se encontró '" + id2 + "'");
         }
-
+        
         int operacion;
-        if(step < 0) {
+        if(step.startsWith("-")) {
             // Si el step es negativo, restar en lugar de sumar
-            operacion = TercetoManager.add("-", id, String.valueOf(-step)); // en este caso ya va a ser un string
+            operacion = TercetoManager.add("-", id, step.replace("-", "")); // en este caso ya va a ser un string
         }else{
-            operacion = TercetoManager.add("+", id, String.valueOf(step)); // step es un entero, se convierte
+            if(step.equals(" ")) {
+                if ("Int".equals(idType)) {
+                    step = "1"; // Step por defecto para Int
+                } else if ("Float".equals(idType)) {
+                    step = "1.0"; // Step por defecto para Float
+                }
+            }
+            operacion = TercetoManager.add("+", id, step); // 
         }
 
         TercetoManager.add(":=", id, TercetoManager.ref(operacion));
@@ -741,13 +770,13 @@ for_bucle ::=
 salida ::= WRITE PARENTESIS_IZQ CTE_STR:s PARENTESIS_DER
 {:
     System.out.println("salida -> WRITE PARENTESIS_IZQ CTE_STR PARENTESIS_DER");
-    TercetoManager.add("WRITE", s, "-");
+    TercetoManager.add("WRITE", s, "_");
 :}
          | WRITE PARENTESIS_IZQ ID:id PARENTESIS_DER
 {:
     System.out.println("salida -> WRITE PARENTESIS_IZQ ID PARENTESIS_DER");
     checkDeclared(id);
-    TercetoManager.add("WRITE", id, "-");
+    TercetoManager.add("WRITE", id, "_");
 :}
          ;
          
@@ -755,6 +784,6 @@ entrada ::= READ PARENTESIS_IZQ ID:id PARENTESIS_DER
 {:
     System.out.println("entrada -> READ PARENTESIS_IZQ ID PARENTESIS_DER");
     checkDeclared(id);
-    TercetoManager.add("READ", id, "-");
+    TercetoManager.add("READ", id, "_");
 :}
           ;

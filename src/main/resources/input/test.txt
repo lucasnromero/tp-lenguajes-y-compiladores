@@ -1,12 +1,14 @@
 init {
-    b,c,d : Float 
+    b,c,d : Float
+    i : Int
 }
 
 d := 0.0
 b := 5.0
 
-while(b > 2.0){
+for b := 10.0 to 5.0 step -1.0
     write(b)
-    b := b - 1.0
-}
+    
+next b
+
 
